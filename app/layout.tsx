@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { AuthProvider } from './contexts/AuthContext'
 import { BookProvider } from './contexts/BookContext'
+import AuthWrapper from './components/AuthWrapper'
 
 export const metadata: Metadata = {
   title: 'Book Tracker',
@@ -28,11 +30,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Book Tracker" />
       </head>
       <body className="min-h-screen bg-gray-50">
-        <BookProvider>
-          <div className="mx-auto max-w-md bg-white min-h-screen shadow-lg">
-            {children}
-          </div>
-        </BookProvider>
+        <AuthProvider>
+          <AuthWrapper>
+            <BookProvider>
+              <div className="mx-auto max-w-md bg-white min-h-screen shadow-lg">
+                {children}
+              </div>
+            </BookProvider>
+          </AuthWrapper>
+        </AuthProvider>
       </body>
     </html>
   )

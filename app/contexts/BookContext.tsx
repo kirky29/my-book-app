@@ -13,6 +13,7 @@ import {
   Timestamp 
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
+import { useAuth } from './AuthContext'
 
 interface Book {
   id: string
@@ -53,10 +54,17 @@ export const useBooks = () => {
 export const BookProvider = ({ children }: { children: ReactNode }) => {
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
 
-  // Set up real-time listener for books collection
+  // Set up real-time listener for user's books collection
   useEffect(() => {
-    const booksRef = collection(db, 'books')
+    if (!user) {
+      setBooks([])
+      setLoading(false)
+      return
+    }
+
+    const booksRef = collection(db, 'users', user.uid, 'books')
     const q = query(booksRef, orderBy('dateAdded', 'desc'))
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -87,11 +95,15 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [user])
 
   const addBook = async (bookData: Omit<Book, 'id' | 'dateAdded'>) => {
+    if (!user) {
+      throw new Error('User must be authenticated to add books')
+    }
+    
     try {
-      const booksRef = collection(db, 'books')
+      const booksRef = collection(db, 'users', user.uid, 'books')
       await addDoc(booksRef, {
         ...bookData,
         dateAdded: new Date().toISOString().split('T')[0],
@@ -104,8 +116,12 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateBook = async (id: string, updates: Partial<Book>) => {
+    if (!user) {
+      throw new Error('User must be authenticated to update books')
+    }
+    
     try {
-      const bookRef = doc(db, 'books', id)
+      const bookRef = doc(db, 'users', user.uid, 'books', id)
       await updateDoc(bookRef, updates)
     } catch (error) {
       console.error('Error updating book:', error)
@@ -114,8 +130,12 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const deleteBook = async (id: string) => {
+    if (!user) {
+      throw new Error('User must be authenticated to delete books')
+    }
+    
     try {
-      const bookRef = doc(db, 'books', id)
+      const bookRef = doc(db, 'users', user.uid, 'books', id)
       await deleteDoc(bookRef)
     } catch (error) {
       console.error('Error deleting book:', error)

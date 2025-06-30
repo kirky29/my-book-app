@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan } from 'lucide-react'
+import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
+import { useAuth } from './contexts/AuthContext'
 import BarcodeScanner from './components/BarcodeScanner'
 
 interface GoogleBook {
@@ -30,6 +31,7 @@ interface GoogleBook {
 export default function BookTracker() {
   const router = useRouter()
   const { books, addBook, toggleBookStatus, loading } = useBooks()
+  const { user, logout } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [newBook, setNewBook] = useState({ 
@@ -187,6 +189,15 @@ export default function BookTracker() {
     return matchesSearch && matchesFilter
   })
 
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/auth')
+    } catch (error) {
+      console.error('Error logging out:', error)
+    }
+  }
+
   const ownedCount = books.filter(book => book.status === 'owned').length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
 
@@ -194,6 +205,21 @@ export default function BookTracker() {
     <div className="flex flex-col h-screen">
       {/* Header */}
       <header className="bg-primary-600 text-white p-4 shadow-lg">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              {user?.displayName || user?.email || 'User'}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 hover:bg-primary-700 rounded-lg transition-colors"
+            title="Sign Out"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
         <h1 className="text-xl font-bold text-center">My Book Tracker</h1>
         <div className="flex justify-center gap-4 mt-2 text-sm">
           <span>📚 Owned: {ownedCount}</span>
