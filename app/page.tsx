@@ -424,8 +424,9 @@ export default function BookTracker() {
       {/* Enhanced Header */}
       <header className="header-gradient text-white safe-area-top">
         <div className="px-6 py-4">
-          {/* Settings & Actions */}
-          <div className="flex items-center justify-end mb-4">
+          {/* Header with Title & Settings */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-white">My Library</h1>
             <button
               onClick={() => router.push('/settings')}
               className="p-3 hover:bg-white/10 rounded-xl transition-colors"
@@ -433,12 +434,6 @@ export default function BookTracker() {
             >
               <Settings className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* App Title */}
-          <div className="text-center mb-4">
-            <h1 className="text-2xl font-bold text-white mb-1">My Library</h1>
-            <p className="text-white/80 text-sm">Your personal book collection</p>
           </div>
 
           {/* Interactive Stats & Actions */}
