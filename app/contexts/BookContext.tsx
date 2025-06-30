@@ -1,6 +1,18 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  onSnapshot, 
+  orderBy, 
+  query,
+  Timestamp 
+} from 'firebase/firestore'
+import { db } from '../../lib/firebase'
 
 interface Book {
   id: string
@@ -20,11 +32,12 @@ interface Book {
 
 interface BookContextType {
   books: Book[]
-  addBook: (book: Omit<Book, 'id' | 'dateAdded'>) => void
-  updateBook: (id: string, updates: Partial<Book>) => void
-  deleteBook: (id: string) => void
+  loading: boolean
+  addBook: (book: Omit<Book, 'id' | 'dateAdded'>) => Promise<void>
+  updateBook: (id: string, updates: Partial<Book>) => Promise<void>
+  deleteBook: (id: string) => Promise<void>
   getBook: (id: string) => Book | undefined
-  toggleBookStatus: (id: string) => void
+  toggleBookStatus: (id: string) => Promise<void>
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined)
@@ -39,54 +52,93 @@ export const useBooks = () => {
 
 export const BookProvider = ({ children }: { children: ReactNode }) => {
   const [books, setBooks] = useState<Book[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Load books from localStorage on component mount
+  // Set up real-time listener for books collection
   useEffect(() => {
-    const savedBooks = localStorage.getItem('book-tracker-books')
-    if (savedBooks) {
-      setBooks(JSON.parse(savedBooks))
-    }
+    const booksRef = collection(db, 'books')
+    const q = query(booksRef, orderBy('dateAdded', 'desc'))
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const booksData: Book[] = []
+      snapshot.forEach((doc) => {
+        const data = doc.data()
+        booksData.push({
+          id: doc.id,
+          title: data.title,
+          author: data.author,
+          status: data.status,
+          dateAdded: data.dateAdded,
+          cover: data.cover,
+          isbn: data.isbn,
+          description: data.description,
+          pageCount: data.pageCount,
+          publishedDate: data.publishedDate,
+          publisher: data.publisher,
+          categories: data.categories,
+          notes: data.notes || ''
+        })
+      })
+      setBooks(booksData)
+      setLoading(false)
+    }, (error) => {
+      console.error('Error fetching books:', error)
+      setLoading(false)
+    })
+
+    return () => unsubscribe()
   }, [])
 
-  // Save books to localStorage whenever books change
-  useEffect(() => {
-    localStorage.setItem('book-tracker-books', JSON.stringify(books))
-  }, [books])
-
-  const addBook = (bookData: Omit<Book, 'id' | 'dateAdded'>) => {
-    const book: Book = {
-      ...bookData,
-      id: Date.now().toString(),
-      dateAdded: new Date().toISOString().split('T')[0],
-      notes: bookData.notes || ''
+  const addBook = async (bookData: Omit<Book, 'id' | 'dateAdded'>) => {
+    try {
+      const booksRef = collection(db, 'books')
+      await addDoc(booksRef, {
+        ...bookData,
+        dateAdded: new Date().toISOString().split('T')[0],
+        notes: bookData.notes || ''
+      })
+    } catch (error) {
+      console.error('Error adding book:', error)
+      throw error
     }
-    setBooks(prev => [book, ...prev])
   }
 
-  const updateBook = (id: string, updates: Partial<Book>) => {
-    setBooks(prev => prev.map(book => 
-      book.id === id ? { ...book, ...updates } : book
-    ))
+  const updateBook = async (id: string, updates: Partial<Book>) => {
+    try {
+      const bookRef = doc(db, 'books', id)
+      await updateDoc(bookRef, updates)
+    } catch (error) {
+      console.error('Error updating book:', error)
+      throw error
+    }
   }
 
-  const deleteBook = (id: string) => {
-    setBooks(prev => prev.filter(book => book.id !== id))
+  const deleteBook = async (id: string) => {
+    try {
+      const bookRef = doc(db, 'books', id)
+      await deleteDoc(bookRef)
+    } catch (error) {
+      console.error('Error deleting book:', error)
+      throw error
+    }
   }
 
   const getBook = (id: string) => {
     return books.find(book => book.id === id)
   }
 
-  const toggleBookStatus = (id: string) => {
-    setBooks(prev => prev.map(book => 
-      book.id === id 
-        ? { ...book, status: book.status === 'owned' ? 'wishlist' : 'owned' }
-        : book
-    ))
+  const toggleBookStatus = async (id: string) => {
+    const book = getBook(id)
+    if (book) {
+      await updateBook(id, {
+        status: book.status === 'owned' ? 'wishlist' : 'owned'
+      })
+    }
   }
 
   const value: BookContextType = {
     books,
+    loading,
     addBook,
     updateBook,
     deleteBook,

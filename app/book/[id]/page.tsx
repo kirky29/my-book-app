@@ -50,9 +50,14 @@ export default function BookProfile() {
     )
   }
 
-  const handleSaveNotes = () => {
-    updateBook(book.id, { notes })
-    setIsEditingNotes(false)
+  const handleSaveNotes = async () => {
+    try {
+      await updateBook(book.id, { notes })
+      setIsEditingNotes(false)
+    } catch (error) {
+      console.error('Error saving notes:', error)
+      alert('Failed to save notes. Please try again.')
+    }
   }
 
   const handleCancelNotes = () => {
@@ -60,14 +65,24 @@ export default function BookProfile() {
     setIsEditingNotes(false)
   }
 
-  const handleDeleteBook = () => {
-    deleteBook(book.id)
-    router.push('/')
+  const handleDeleteBook = async () => {
+    try {
+      await deleteBook(book.id)
+      router.push('/')
+    } catch (error) {
+      console.error('Error deleting book:', error)
+      alert('Failed to delete book. Please try again.')
+    }
   }
 
-  const handleToggleStatus = () => {
-    toggleBookStatus(book.id)
-    setBook(prev => prev ? { ...prev, status: prev.status === 'owned' ? 'wishlist' : 'owned' } : prev)
+  const handleToggleStatus = async () => {
+    try {
+      await toggleBookStatus(book.id)
+      setBook(prev => prev ? { ...prev, status: prev.status === 'owned' ? 'wishlist' : 'owned' } : prev)
+    } catch (error) {
+      console.error('Error toggling book status:', error)
+      alert('Failed to update book status. Please try again.')
+    }
   }
 
   return (

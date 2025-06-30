@@ -29,7 +29,7 @@ interface GoogleBook {
 
 export default function BookTracker() {
   const router = useRouter()
-  const { books, addBook, toggleBookStatus } = useBooks()
+  const { books, addBook, toggleBookStatus, loading } = useBooks()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [newBook, setNewBook] = useState({ 
@@ -83,36 +83,41 @@ export default function BookTracker() {
     }
   }
 
-  const handleAddBook = () => {
+  const handleAddBook = async () => {
     if (newBook.title.trim() && newBook.author.trim()) {
-      addBook({
-        title: newBook.title.trim(),
-        author: newBook.author.trim(),
-        status: newBook.status,
-        cover: newBook.cover,
-        isbn: newBook.isbn,
-        description: newBook.description,
-        pageCount: newBook.pageCount,
-        publishedDate: newBook.publishedDate,
-        publisher: newBook.publisher,
-        categories: newBook.categories,
-        notes: ''
-      })
-      setNewBook({ 
-        title: '', 
-        author: '', 
-        status: 'owned', 
-        cover: '', 
-        isbn: '',
-        description: '',
-        pageCount: undefined,
-        publishedDate: '',
-        publisher: '',
-        categories: []
-      })
-      setShowAddForm(false)
-      setGoogleSearchResults([])
-      setGoogleSearchTerm('')
+      try {
+        await addBook({
+          title: newBook.title.trim(),
+          author: newBook.author.trim(),
+          status: newBook.status,
+          cover: newBook.cover,
+          isbn: newBook.isbn,
+          description: newBook.description,
+          pageCount: newBook.pageCount,
+          publishedDate: newBook.publishedDate,
+          publisher: newBook.publisher,
+          categories: newBook.categories,
+          notes: ''
+        })
+        setNewBook({ 
+          title: '', 
+          author: '', 
+          status: 'owned', 
+          cover: '', 
+          isbn: '',
+          description: '',
+          pageCount: undefined,
+          publishedDate: '',
+          publisher: '',
+          categories: []
+        })
+        setShowAddForm(false)
+        setGoogleSearchResults([])
+        setGoogleSearchTerm('')
+      } catch (error) {
+        console.error('Error adding book:', error)
+        alert('Failed to add book. Please try again.')
+      }
     }
   }
 
@@ -233,7 +238,12 @@ export default function BookTracker() {
 
       {/* Book List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {filteredBooks.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-3"></div>
+            <p>Loading your books...</p>
+          </div>
+        ) : filteredBooks.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>
@@ -286,9 +296,14 @@ export default function BookTracker() {
                 </div>
                 <div className="flex gap-2 ml-3">
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation()
-                      toggleBookStatus(book.id)
+                      try {
+                        await toggleBookStatus(book.id)
+                      } catch (error) {
+                        console.error('Error toggling book status:', error)
+                        alert('Failed to update book status. Please try again.')
+                      }
                     }}
                     className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
                     title={`Mark as ${book.status === 'owned' ? 'wishlist' : 'owned'}`}
