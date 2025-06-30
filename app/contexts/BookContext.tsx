@@ -21,6 +21,7 @@ interface Book {
   author: string
   status: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none' // Ownership status
   readStatus: 'unread' | 'reading' | 'read' // Reading progress
+  rating?: number // Star rating from 1-5
   dateAdded: string
   cover?: string
   isbn?: string
@@ -79,6 +80,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           author: data.author,
           status: data.status,
           readStatus: data.readStatus || 'unread', // Default for existing books
+          rating: data.rating, // Star rating
           dateAdded: data.dateAdded,
           cover: data.cover,
           isbn: data.isbn,

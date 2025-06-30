@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
 import { useAuth } from './contexts/AuthContext'
 import BarcodeScanner from './components/BarcodeScanner'
+import StarRating from './components/StarRating'
 
 interface GoogleBook {
   id: string
@@ -39,6 +40,7 @@ export default function BookTracker() {
     author: '', 
     status: 'physical' as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none', 
     readStatus: 'unread' as 'unread' | 'reading' | 'read',
+    rating: 0,
     cover: '', 
     isbn: '',
     description: '',
@@ -95,6 +97,7 @@ export default function BookTracker() {
           author: newBook.author.trim(),
           status: newBook.status,
           readStatus: newBook.readStatus,
+          rating: newBook.rating > 0 ? newBook.rating : undefined,
           cover: newBook.cover,
           isbn: newBook.isbn,
           description: newBook.description,
@@ -109,6 +112,7 @@ export default function BookTracker() {
           author: '', 
           status: 'physical', 
           readStatus: 'unread',
+          rating: 0,
           cover: '', 
           isbn: '',
           description: '',
@@ -137,6 +141,7 @@ export default function BookTracker() {
       title: googleBook.volumeInfo.title,
       author: authors.join(', '),
       status: newBook.status,
+      rating: 0,
       cover: googleBook.volumeInfo.imageLinks?.thumbnail || '',
       isbn: isbn,
       description: googleBook.volumeInfo.description || '',
@@ -454,9 +459,20 @@ export default function BookTracker() {
                         <h3 className="font-semibold text-gray-900 text-lg leading-tight mb-1 line-clamp-2">
                           {book.title}
                         </h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-1">
+                        <p className="text-gray-600 text-sm mb-2 line-clamp-1">
                           {book.author}
                         </p>
+                        
+                        {/* Rating Display */}
+                        {book.rating && book.rating > 0 && (
+                          <div className="mb-3">
+                            <StarRating 
+                              rating={book.rating} 
+                              readOnly={true} 
+                              size="sm"
+                            />
+                          </div>
+                        )}
                       </div>
                       <ChevronRight className="w-5 h-5 text-gray-400 ml-2 flex-shrink-0" />
                     </div>
@@ -752,6 +768,17 @@ export default function BookTracker() {
                       <option value="reading">📚 Currently Reading</option>
                       <option value="read">✅ Finished</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (Optional)</label>
+                    <div className="py-2">
+                      <StarRating
+                        rating={newBook.rating}
+                        onRatingChange={(rating) => setNewBook(prev => ({ ...prev, rating }))}
+                        size="lg"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex gap-3 pt-4">

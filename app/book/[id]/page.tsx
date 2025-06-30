@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag, Star, Heart, Library, BookCheck, Share, Bookmark, UserCheck } from 'lucide-react'
 import { useBooks } from '../../contexts/BookContext'
+import StarRating from '../../components/StarRating'
 
 export default function BookProfile() {
   const router = useRouter()
@@ -141,6 +142,20 @@ export default function BookProfile() {
     } catch (error) {
       console.error('Error updating reading status:', error)
       alert('Failed to update reading status. Please try again.')
+    }
+  }
+
+  const handleRatingChange = async (newRating: number) => {
+    try {
+      await updateBook(book.id, { rating: newRating === 0 ? undefined : newRating })
+      // Update local state to reflect the new rating
+      const updatedBook = getBook(book.id)
+      if (updatedBook) {
+        setBook(updatedBook)
+      }
+    } catch (error) {
+      console.error('Error updating rating:', error)
+      alert('Failed to update rating. Please try again.')
     }
   }
 
@@ -493,6 +508,30 @@ export default function BookProfile() {
               />
             </div>
           )}
+
+          {/* Rating Card */}
+          <div className="card p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="w-6 h-6 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Star className="w-3 h-3 text-yellow-600" />
+              </div>
+              My Rating
+            </h3>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <StarRating
+                  rating={book.rating || 0}
+                  onRatingChange={handleRatingChange}
+                  size="lg"
+                />
+                {!book.rating && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Tap the stars to rate this book
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Book Information Card */}
           <div className="card p-6">
