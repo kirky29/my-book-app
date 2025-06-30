@@ -59,7 +59,7 @@
   
   /* Book Card Specific */
   .book-card {
-    @apply bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-98;
+    @apply bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95;
   }
   
   /* Status Badges */
@@ -107,10 +107,6 @@
     animation: slideUp 0.3s ease-out;
   }
   
-  .active\:scale-98:active {
-    transform: scale(0.98);
-  }
-  
   /* Text Styles */
   .text-gradient {
     @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
@@ -145,6 +141,30 @@
   
   .filter-pill-inactive {
     @apply bg-white/80 text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300;
+  }
+
+  /* Utility Classes */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 }
 
