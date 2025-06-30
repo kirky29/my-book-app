@@ -22,6 +22,8 @@ interface Book {
   status: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none' // Ownership status
   readStatus: 'unread' | 'reading' | 'read' // Reading progress
   rating?: number // Star rating from 1-5
+  series?: string // Book series name
+  seriesNumber?: number // Position in series
   dateAdded: string
   cover?: string
   isbn?: string
@@ -42,6 +44,11 @@ interface BookContextType {
   deleteBook: (id: string) => Promise<void>
   getBook: (id: string) => Book | undefined
   toggleBookStatus: (id: string) => Promise<void>
+  findDuplicates: (title: string, author: string) => Book[]
+  getBooksByISBN: (isbn: string) => Book[]
+  getSeriesBooks: (seriesName: string) => Book[]
+  searchByISBN: (isbn: string) => Promise<any>
+  getAllSeries: () => Array<{ name: string; count: number; ownedCount: number }>
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined)
@@ -81,6 +88,8 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           status: data.status,
           readStatus: data.readStatus || 'unread', // Default for existing books
           rating: data.rating, // Star rating
+          series: data.series, // Series name
+          seriesNumber: data.seriesNumber, // Series position
           dateAdded: data.dateAdded,
           cover: data.cover,
           isbn: data.isbn,
@@ -194,6 +203,76 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  // New helper functions for enhanced features
+  const findDuplicates = (title: string, author: string): Book[] => {
+    const titleWords = title.toLowerCase().split(' ').filter(word => word.length > 2)
+    const authorWords = author.toLowerCase().split(' ')
+    
+    return books.filter(book => {
+      const bookTitle = book.title.toLowerCase()
+      const bookAuthor = book.author.toLowerCase()
+      
+      // Check if titles are very similar (80% word match)
+      const titleMatches = titleWords.filter(word => bookTitle.includes(word)).length
+      const titleSimilarity = titleWords.length > 0 ? titleMatches / titleWords.length : 0
+      
+      // Check if author matches
+      const authorMatches = authorWords.some(word => bookAuthor.includes(word))
+      
+      return titleSimilarity >= 0.8 && authorMatches
+    })
+  }
+
+  const getBooksByISBN = (isbn: string): Book[] => {
+    const cleanISBN = isbn.replace(/[^\dX]/gi, '')
+    return books.filter(book => 
+      book.isbn && book.isbn.replace(/[^\dX]/gi, '') === cleanISBN
+    )
+  }
+
+  const getSeriesBooks = (seriesName: string): Book[] => {
+    return books
+      .filter(book => book.series?.toLowerCase() === seriesName.toLowerCase())
+      .sort((a, b) => (a.seriesNumber || 0) - (b.seriesNumber || 0))
+  }
+
+  const getAllSeries = () => {
+    const seriesMap = new Map<string, { name: string; count: number; ownedCount: number }>()
+    
+    books.forEach(book => {
+      if (book.series) {
+        const existing = seriesMap.get(book.series.toLowerCase())
+        const isOwned = ['physical', 'digital', 'both'].includes(book.status)
+        
+        if (existing) {
+          existing.count++
+          if (isOwned) existing.ownedCount++
+        } else {
+          seriesMap.set(book.series.toLowerCase(), {
+            name: book.series,
+            count: 1,
+            ownedCount: isOwned ? 1 : 0
+          })
+        }
+      }
+    })
+    
+    return Array.from(seriesMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  const searchByISBN = async (isbn: string) => {
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+      )
+      const data = await response.json()
+      return data.items?.[0] || null
+    } catch (error) {
+      console.error('Error searching by ISBN:', error)
+      return null
+    }
+  }
+
   const value: BookContextType = {
     books,
     loading,
@@ -201,7 +280,12 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     updateBook,
     deleteBook,
     getBook,
-    toggleBookStatus
+    toggleBookStatus,
+    findDuplicates,
+    getBooksByISBN,
+    getSeriesBooks,
+    searchByISBN,
+    getAllSeries
   }
 
   return (

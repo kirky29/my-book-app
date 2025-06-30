@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck } from 'lucide-react'
+import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
 import { useAuth } from './contexts/AuthContext'
 import BarcodeScanner from './components/BarcodeScanner'
 import StarRating from './components/StarRating'
+import QuickISBNSearch from './components/QuickISBNSearch'
 
 interface GoogleBook {
   id: string
@@ -35,12 +36,15 @@ export default function BookTracker() {
   const { user, logout } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showISBNSearch, setShowISBNSearch] = useState(false)
   const [newBook, setNewBook] = useState({ 
     title: '', 
     author: '', 
     status: 'physical' as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none', 
     readStatus: 'unread' as 'unread' | 'reading' | 'read',
     rating: 0,
+    series: '',
+    seriesNumber: undefined as number | undefined,
     cover: '', 
     isbn: '',
     description: '',
@@ -98,6 +102,8 @@ export default function BookTracker() {
           status: newBook.status,
           readStatus: newBook.readStatus,
           rating: newBook.rating > 0 ? newBook.rating : undefined,
+          series: newBook.series.trim() || undefined,
+          seriesNumber: newBook.seriesNumber || undefined,
           cover: newBook.cover,
           isbn: newBook.isbn,
           description: newBook.description,
@@ -113,6 +119,8 @@ export default function BookTracker() {
           status: 'physical', 
           readStatus: 'unread',
           rating: 0,
+          series: '',
+          seriesNumber: undefined,
           cover: '', 
           isbn: '',
           description: '',
@@ -142,6 +150,8 @@ export default function BookTracker() {
       author: authors.join(', '),
       status: newBook.status,
       rating: 0,
+      series: '',
+      seriesNumber: undefined,
       cover: googleBook.volumeInfo.imageLinks?.thumbnail || '',
       isbn: isbn,
       description: googleBook.volumeInfo.description || '',
@@ -192,7 +202,8 @@ export default function BookTracker() {
 
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         book.author.toLowerCase().includes(searchTerm.toLowerCase())
+                         book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (book.series && book.series.toLowerCase().includes(searchTerm.toLowerCase()))
     
     let matchesFilter = false
     if (filter === 'all') {
@@ -463,6 +474,15 @@ export default function BookTracker() {
                           {book.author}
                         </p>
                         
+                        {/* Series Information */}
+                        {book.series && (
+                          <p className="text-blue-600 text-xs mb-2 flex items-center gap-1">
+                            <Hash className="w-3 h-3" />
+                            {book.series}
+                            {book.seriesNumber && ` #${book.seriesNumber}`}
+                          </p>
+                        )}
+                        
                         {/* Rating Display */}
                         {book.rating && book.rating > 0 && (
                           <div className="mb-3">
@@ -560,8 +580,18 @@ export default function BookTracker() {
         )}
       </div>
 
-      {/* Floating Add Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+        {/* Quick ISBN Search Button */}
+        <button
+          onClick={() => setShowISBNSearch(true)}
+          className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
+          title="Quick ISBN Check"
+        >
+          <Hash className="w-5 h-5" />
+        </button>
+        
+        {/* Add Book Button */}
         <button
           onClick={() => setShowAddForm(true)}
           className="w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center justify-center active:scale-95"
@@ -770,6 +800,34 @@ export default function BookTracker() {
                     </select>
                   </div>
 
+                  {/* Series Information */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Series Name (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Harry Potter"
+                        value={newBook.series}
+                        onChange={(e) => setNewBook(prev => ({ ...prev, series: e.target.value }))}
+                        className="input"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Book #</label>
+                      <input
+                        type="number"
+                        placeholder="1"
+                        min="1"
+                        value={newBook.seriesNumber || ''}
+                        onChange={(e) => setNewBook(prev => ({ 
+                          ...prev, 
+                          seriesNumber: e.target.value ? parseInt(e.target.value) : undefined 
+                        }))}
+                        className="input"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (Optional)</label>
                     <div className="py-2">
@@ -802,6 +860,19 @@ export default function BookTracker() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Quick ISBN Search Modal */}
+      {showISBNSearch && (
+        <QuickISBNSearch
+          onBookFound={(googleBook) => {
+            selectGoogleBook(googleBook)
+            setShowISBNSearch(false)
+            setShowAddForm(true)
+            setSearchMode('manual')
+          }}
+          onClose={() => setShowISBNSearch(false)}
+        />
       )}
 
       {/* Barcode Scanner */}

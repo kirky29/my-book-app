@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag, Star, Heart, Library, BookCheck, Share, Bookmark, UserCheck } from 'lucide-react'
+import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag, Star, Heart, Library, BookCheck, Share, Bookmark, UserCheck, Hash } from 'lucide-react'
 import { useBooks } from '../../contexts/BookContext'
 import StarRating from '../../components/StarRating'
 
@@ -216,7 +216,18 @@ export default function BookProfile() {
             {/* Book Info */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">{book.title}</h1>
-              <p className="text-lg text-gray-600 mb-4">{book.author}</p>
+              <p className="text-lg text-gray-600 mb-2">{book.author}</p>
+              
+              {/* Series Information */}
+              {book.series && (
+                <p className="text-blue-600 text-sm mb-4 flex items-center gap-2">
+                  <Hash className="w-4 h-4" />
+                  <span className="font-medium">
+                    {book.series}
+                    {book.seriesNumber && ` #${book.seriesNumber}`}
+                  </span>
+                </p>
+              )}
               
               {/* Status Badges */}
               <div className="mb-4 flex flex-wrap gap-2">
@@ -527,6 +538,22 @@ export default function BookProfile() {
               Book Information
             </h3>
             <div className="space-y-4">
+              {/* Series Information */}
+              {book.series && (
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Hash className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-blue-600 font-medium">Series</p>
+                    <p className="text-gray-900 font-semibold">
+                      {book.series}
+                      {book.seriesNumber && ` #${book.seriesNumber}`}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               {book.publisher && (
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
