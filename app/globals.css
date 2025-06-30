@@ -62,6 +62,11 @@
     @apply bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95;
   }
   
+  /* Grid-specific book card adjustments */
+  .book-card-grid {
+    @apply bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl p-3 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95;
+  }
+  
   /* Status Badges */
   .status-badge {
     @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm;

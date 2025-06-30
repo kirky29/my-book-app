@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash, X, Edit3 } from 'lucide-react'
+import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash, X, Edit3, Grid3X3, List, LayoutGrid } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
 import { useAuth } from './contexts/AuthContext'
@@ -81,6 +81,7 @@ export default function BookTracker() {
   const [isFromGoogleBooks, setIsFromGoogleBooks] = useState(false)
   const [duplicateBooks, setDuplicateBooks] = useState<Book[]>([])
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   // Handle URL parameters for PWA shortcuts
   useEffect(() => {
@@ -573,6 +574,37 @@ export default function BookTracker() {
           </div>
         </div>
         
+        {/* View Toggle & Filters */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-700">Your Books</h3>
+          <div className="flex items-center gap-2">
+            <div className="bg-gray-100 rounded-lg p-1 flex">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-all duration-200 ${
+                  viewMode === 'list' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="List View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-all duration-200 ${
+                  viewMode === 'grid' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Grid View"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+        
         {/* Filter Pills */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
@@ -697,8 +729,9 @@ export default function BookTracker() {
               </button>
             )}
           </div>
-        ) : (
-          <div className="space-y-4 pb-6">
+        ) : viewMode === 'list' ? (
+          /* List View - Improved */
+          <div className="space-y-3 pb-6">
             {filteredBooks.map(book => (
               <div 
                 key={book.id} 
@@ -712,10 +745,10 @@ export default function BookTracker() {
                       <img 
                         src={book.cover} 
                         alt={book.title}
-                        className="w-16 h-24 object-cover rounded-lg shadow-md border border-gray-100"
+                        className="w-16 h-24 object-cover rounded-lg shadow-sm border border-gray-200"
                       />
                     ) : (
-                      <div className="w-16 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-md border border-gray-100">
+                      <div className="w-16 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
                         <BookOpen className="w-6 h-6 text-gray-400" />
                       </div>
                     )}
@@ -723,12 +756,12 @@ export default function BookTracker() {
 
                   {/* Book Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 text-lg leading-tight mb-1 line-clamp-2">
+                        <h3 className="font-semibold text-gray-900 text-base leading-tight mb-1 line-clamp-2">
                           {book.title}
                         </h3>
-                        <p className="text-gray-600 text-sm mb-2 line-clamp-1">
+                        <p className="text-gray-600 text-sm mb-1 line-clamp-1">
                           {book.author}
                         </p>
                         
@@ -743,7 +776,7 @@ export default function BookTracker() {
                         
                         {/* Rating Display */}
                         {book.rating && book.rating > 0 && (
-                          <div className="mb-3">
+                          <div className="mb-2">
                             <StarRating 
                               rating={book.rating} 
                               readOnly={true} 
@@ -755,50 +788,50 @@ export default function BookTracker() {
                       <ChevronRight className="w-5 h-5 text-gray-400 ml-2 flex-shrink-0" />
                     </div>
 
-                    {/* Status and Date */}
+                    {/* Status Badges */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {/* Ownership Status Badge */}
-                        <span className={`status-badge ${
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                           ['physical', 'digital', 'both'].includes(book.status)
-                            ? 'status-owned' 
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
                             : book.status === 'lent'
-                            ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200'
-                            : 'status-wishlist'
+                            ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
                         }`}>
                           {book.status === 'physical' && (
                             <>
-                              <Library className="w-4 h-4" />
+                              <Library className="w-3 h-3" />
                               Physical
                             </>
                           )}
                           {book.status === 'digital' && (
                             <>
-                              <BookOpen className="w-4 h-4" />
+                              <BookOpen className="w-3 h-3" />
                               Digital
                             </>
                           )}
                           {book.status === 'both' && (
                             <>
-                              <Star className="w-4 h-4" />
-                              Both Formats
+                              <Star className="w-3 h-3" />
+                              Both
                             </>
                           )}
                           {book.status === 'lent' && (
                             <>
-                              <UserCheck className="w-4 h-4" />
-                              Lent to {book.lentTo || 'Someone'}
+                              <UserCheck className="w-3 h-3" />
+                              Lent
                             </>
                           )}
                           {book.status === 'wishlist' && (
                             <>
-                              <Heart className="w-4 h-4" />
+                              <Heart className="w-3 h-3" />
                               Wishlist
                             </>
                           )}
                           {book.status === 'none' && (
                             <>
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-3 h-3" />
                               Not Owned
                             </>
                           )}
@@ -806,30 +839,166 @@ export default function BookTracker() {
 
                         {/* Reading Status Badge */}
                         {book.readStatus !== 'unread' && (
-                          <span className={`status-badge ${
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                             book.readStatus === 'read' 
-                              ? 'status-read'
-                              : 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 border border-purple-200'
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                              : 'bg-purple-100 text-purple-800 border border-purple-200'
                           }`}>
                             {book.readStatus === 'read' && (
                               <>
-                                <BookCheck className="w-4 h-4" />
+                                <BookCheck className="w-3 h-3" />
                                 Read
                               </>
                             )}
                             {book.readStatus === 'reading' && (
                               <>
-                                <BookOpen className="w-4 h-4" />
+                                <BookOpen className="w-3 h-3" />
                                 Reading
                               </>
                             )}
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-gray-400 ml-2">
+                      <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
                         {book.dateAdded}
                       </span>
                     </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Grid View - New */
+          <div className="grid grid-cols-2 gap-4 pb-6">
+            {filteredBooks.map(book => (
+              <div 
+                key={book.id} 
+                className="book-card-grid cursor-pointer fade-in"
+                onClick={() => router.push(`/book/${book.id}`)}
+              >
+                {/* Book Cover - Full Width */}
+                <div className="w-full mb-3">
+                  {book.cover ? (
+                    <img 
+                      src={book.cover} 
+                      alt={book.title}
+                      className="w-full h-48 object-cover rounded-lg shadow-sm border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
+                      <BookOpen className="w-12 h-12 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Book Info */}
+                <div className="space-y-2">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 mb-1">
+                      {book.title}
+                    </h3>
+                    <p className="text-gray-600 text-xs line-clamp-1">
+                      {book.author}
+                    </p>
+                  </div>
+                  
+                  {/* Series Information */}
+                  {book.series && (
+                    <p className="text-blue-600 text-xs flex items-center gap-1">
+                      <Hash className="w-3 h-3" />
+                      {book.series}
+                      {book.seriesNumber && ` #${book.seriesNumber}`}
+                    </p>
+                  )}
+                  
+                  {/* Rating Display */}
+                  {book.rating && book.rating > 0 && (
+                    <div>
+                      <StarRating 
+                        rating={book.rating} 
+                        readOnly={true} 
+                        size="sm"
+                      />
+                    </div>
+                  )}
+
+                  {/* Status Badges */}
+                  <div className="space-y-1">
+                    {/* Ownership Status Badge */}
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium w-full justify-center ${
+                      ['physical', 'digital', 'both'].includes(book.status)
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                        : book.status === 'lent'
+                        ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}>
+                      {book.status === 'physical' && (
+                        <>
+                          <Library className="w-3 h-3" />
+                          Physical
+                        </>
+                      )}
+                      {book.status === 'digital' && (
+                        <>
+                          <BookOpen className="w-3 h-3" />
+                          Digital
+                        </>
+                      )}
+                      {book.status === 'both' && (
+                        <>
+                          <Star className="w-3 h-3" />
+                          Both
+                        </>
+                      )}
+                      {book.status === 'lent' && (
+                        <>
+                          <UserCheck className="w-3 h-3" />
+                          Lent
+                        </>
+                      )}
+                      {book.status === 'wishlist' && (
+                        <>
+                          <Heart className="w-3 h-3" />
+                          Wishlist
+                        </>
+                      )}
+                      {book.status === 'none' && (
+                        <>
+                          <Eye className="w-3 h-3" />
+                          Not Owned
+                        </>
+                      )}
+                    </span>
+
+                    {/* Reading Status Badge */}
+                    {book.readStatus !== 'unread' && (
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium w-full justify-center ${
+                        book.readStatus === 'read' 
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : 'bg-purple-100 text-purple-800 border border-purple-200'
+                      }`}>
+                        {book.readStatus === 'read' && (
+                          <>
+                            <BookCheck className="w-3 h-3" />
+                            Read
+                          </>
+                        )}
+                        {book.readStatus === 'reading' && (
+                          <>
+                            <BookOpen className="w-3 h-3" />
+                            Reading
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Date */}
+                  <div className="text-center">
+                    <span className="text-xs text-gray-400">
+                      {book.dateAdded}
+                    </span>
                   </div>
                 </div>
               </div>
