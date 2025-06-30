@@ -252,16 +252,16 @@ export default function BookProfile() {
                 </span>
               </div>
 
-              {/* Quick Action Buttons */}
-              <div className="flex gap-3">
+              {/* Quick Action Button */}
+              <div className="flex justify-start">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowStatusDropdown(!showStatusDropdown)
                   }}
-                  className="btn btn-secondary btn-sm flex-1 relative"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm"
                 >
-                  <Check className="w-4 h-4 mr-2" />
+                  <Check className="w-4 h-4" />
                   Change Status
                 </button>
               </div>
