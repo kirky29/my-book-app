@@ -81,7 +81,7 @@ export default function BookTracker() {
   const [isFromGoogleBooks, setIsFromGoogleBooks] = useState(false)
   const [duplicateBooks, setDuplicateBooks] = useState<Book[]>([])
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
   const [showQuickActions, setShowQuickActions] = useState(false)
 
   // Handle URL parameters for PWA shortcuts
