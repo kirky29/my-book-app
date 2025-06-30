@@ -13,12 +13,30 @@ export default function BookProfile() {
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notes, setNotes] = useState(book?.notes || '')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
 
   useEffect(() => {
     const foundBook = getBook(params.id as string)
     setBook(foundBook)
     setNotes(foundBook?.notes || '')
   }, [params.id, getBook])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showStatusDropdown) {
+        setShowStatusDropdown(false)
+      }
+    }
+
+    if (showStatusDropdown) {
+      document.addEventListener('click', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showStatusDropdown])
 
   if (!book) {
     return (
@@ -75,16 +93,17 @@ export default function BookProfile() {
     }
   }
 
-  const handleToggleStatus = async () => {
+  const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'read' | 'wishlist') => {
     try {
-      await toggleBookStatus(book.id)
-      // Update local state to reflect the new status from the context
+      await updateBook(book.id, { status: newStatus })
+      // Update local state to reflect the new status
       const updatedBook = getBook(book.id)
       if (updatedBook) {
         setBook(updatedBook)
       }
+      setShowStatusDropdown(false)
     } catch (error) {
-      console.error('Error toggling book status:', error)
+      console.error('Error updating book status:', error)
       alert('Failed to update book status. Please try again.')
     }
   }
@@ -167,14 +186,97 @@ export default function BookProfile() {
               </div>
 
               {/* Quick Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 relative">
                 <button
-                  onClick={handleToggleStatus}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowStatusDropdown(!showStatusDropdown)
+                  }}
                   className="btn btn-secondary text-sm"
                 >
                   <Check className="w-4 h-4 mr-1" />
                   Change Status
                 </button>
+                
+                {/* Status Dropdown */}
+                {showStatusDropdown && (
+                  <div 
+                    className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleStatusChange('physical')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                          book.status === 'physical' ? 'bg-green-50 text-green-800' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-base">📚</span>
+                        <div>
+                          <div className="font-medium">Physical Copy</div>
+                          <div className="text-xs text-gray-500">Own paperback/hardcover</div>
+                        </div>
+                        {book.status === 'physical' && <Check className="w-4 h-4 ml-auto text-green-600" />}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleStatusChange('digital')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                          book.status === 'digital' ? 'bg-green-50 text-green-800' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-base">📱</span>
+                        <div>
+                          <div className="font-medium">Digital Copy</div>
+                          <div className="text-xs text-gray-500">Kindle, audiobook, or ebook</div>
+                        </div>
+                        {book.status === 'digital' && <Check className="w-4 h-4 ml-auto text-green-600" />}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleStatusChange('both')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                          book.status === 'both' ? 'bg-green-50 text-green-800' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-base">📚📱</span>
+                        <div>
+                          <div className="font-medium">Both Formats</div>
+                          <div className="text-xs text-gray-500">Own physical + digital</div>
+                        </div>
+                        {book.status === 'both' && <Check className="w-4 h-4 ml-auto text-green-600" />}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleStatusChange('read')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                          book.status === 'read' ? 'bg-blue-50 text-blue-800' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-base">✅</span>
+                        <div>
+                          <div className="font-medium">Read It</div>
+                          <div className="text-xs text-gray-500">Borrowed, library, or finished</div>
+                        </div>
+                        {book.status === 'read' && <Check className="w-4 h-4 ml-auto text-blue-600" />}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleStatusChange('wishlist')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                          book.status === 'wishlist' ? 'bg-yellow-50 text-yellow-800' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-base">🔖</span>
+                        <div>
+                          <div className="font-medium">Want to Read</div>
+                          <div className="text-xs text-gray-500">Add to wishlist</div>
+                        </div>
+                        {book.status === 'wishlist' && <Check className="w-4 h-4 ml-auto text-yellow-600" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
