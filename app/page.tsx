@@ -494,18 +494,28 @@ export default function BookTracker() {
 
       {/* Enhanced Search and Filter */}
       <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-100">
-        {/* Search Bar */}
-        <div className="search-container mb-4">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search your library..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input pl-12 pr-4"
-            />
+        {/* Search Bar & Add Book Button */}
+        <div className="flex gap-3 mb-4">
+          <div className="search-container flex-1" style={{ flexBasis: '60%' }}>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search your library..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input pl-12 pr-4"
+              />
+            </div>
           </div>
+          <button
+            onClick={() => setShowQuickActions(true)}
+            className="btn btn-primary flex items-center gap-2 px-4 py-3 whitespace-nowrap"
+            style={{ flexBasis: '40%' }}
+          >
+            <Plus className="w-5 h-5" />
+            Add Book
+          </button>
         </div>
         
         {/* View Toggle & Filters */}
@@ -626,7 +636,7 @@ export default function BookTracker() {
       </div>
 
       {/* Enhanced Book Grid */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar relative">
         {loading ? (
           <div className="text-center py-12">
             <div className="spinner h-12 w-12 mx-auto mb-4"></div>
@@ -939,18 +949,11 @@ export default function BookTracker() {
             ))}
           </div>
         )}
+
+
       </div>
 
-      {/* Floating Action Button - Always Visible */}
-      <div className="fab-bottom-right animate-float">
-        <button
-          onClick={() => setShowQuickActions(true)}
-          className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-floating hover:shadow-floating-hover transition-all duration-300 flex items-center justify-center active:scale-95 hover:from-blue-700 hover:to-blue-800 hover:scale-105 border-2 border-white/20"
-          title="Add Book"
-        >
-          <Plus className="w-8 h-8 drop-shadow-sm" />
-        </button>
-      </div>
+
 
       {/* Quick Actions Menu */}
       {showQuickActions && (

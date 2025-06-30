@@ -204,11 +204,11 @@
   }
 }
 
-/* Floating Action Button - Always visible (applies to all browsers) */
+/* Floating Action Button - Scrolls with content */
 .fab-bottom-right {
-  position: fixed !important;
-  bottom: max(5rem, calc(env(safe-area-inset-bottom) + 5rem)) !important;
-  right: max(1.5rem, calc(env(safe-area-inset-right) + 1.5rem)) !important;
+  position: absolute !important;
+  bottom: 2rem !important;
+  right: 2rem !important;
   z-index: 1000 !important;
 }
 
