@@ -10,7 +10,7 @@ export default function BookProfile() {
   const router = useRouter()
   const params = useParams()
   const { getBook, updateBook, deleteBook, toggleBookStatus } = useBooks()
-  const [book, setBook] = useState(getBook(params.id as string))
+  const book = getBook(params.id as string)
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notes, setNotes] = useState(book?.notes || '')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -19,11 +19,12 @@ export default function BookProfile() {
   const [showLentPrompt, setShowLentPrompt] = useState(false)
   const [lentToName, setLentToName] = useState('')
 
+  // Update notes when book changes
   useEffect(() => {
-    const foundBook = getBook(params.id as string)
-    setBook(foundBook)
-    setNotes(foundBook?.notes || '')
-  }, [params.id, getBook])
+    if (book && notes !== book.notes) {
+      setNotes(book.notes || '')
+    }
+  }, [book?.notes])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -77,6 +78,8 @@ export default function BookProfile() {
   }
 
   const handleSaveNotes = async () => {
+    if (!book) return
+    
     try {
       await updateBook(book.id, { notes })
       setIsEditingNotes(false)
@@ -87,11 +90,13 @@ export default function BookProfile() {
   }
 
   const handleCancelNotes = () => {
-    setNotes(book.notes || '')
+    setNotes(book?.notes || '')
     setIsEditingNotes(false)
   }
 
   const handleDeleteBook = async () => {
+    if (!book) return
+    
     try {
       await deleteBook(book.id)
       router.push('/')
@@ -102,74 +107,53 @@ export default function BookProfile() {
   }
 
   const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none') => {
+    if (!book) return
+    
     if (newStatus === 'lent') {
       setShowStatusDropdown(false)
       setShowLentPrompt(true)
       return
     }
 
-    // Update local state immediately for instant visual feedback
-    const updatedBook = { ...book, status: newStatus }
-    setBook(updatedBook)
-
     try {
       await updateBook(book.id, { status: newStatus })
       setShowStatusDropdown(false)
     } catch (error) {
       console.error('Error updating book status:', error)
-      // Revert the local state on error
-      setBook(book)
       alert('Failed to update book status. Please try again.')
     }
   }
 
   const handleReadingStatusChange = async (newReadStatus: 'unread' | 'reading' | 'read') => {
-    // Update local state immediately for instant visual feedback
-    const updatedBook = { ...book, readStatus: newReadStatus }
-    setBook(updatedBook)
-
+    if (!book) return
+    
     try {
       await updateBook(book.id, { readStatus: newReadStatus })
       setShowReadingStatusDropdown(false)
     } catch (error) {
       console.error('Error updating reading status:', error)
-      // Revert the local state on error
-      setBook(book)
       alert('Failed to update reading status. Please try again.')
     }
   }
 
   const handleRatingChange = async (newRating: number) => {
-    // Update local state immediately for instant visual feedback
-    const updatedBook = {
-      ...book,
-      rating: newRating === 0 ? undefined : newRating
-    }
-    setBook(updatedBook)
-
+    if (!book) return
+    
     try {
       await updateBook(book.id, { rating: newRating === 0 ? undefined : newRating })
     } catch (error) {
       console.error('Error updating rating:', error)
-      // Revert the local state on error
-      setBook(book)
       alert('Failed to update rating. Please try again.')
     }
   }
 
   const handleLentSubmit = async () => {
+    if (!book) return
+    
     if (!lentToName.trim()) {
       alert('Please enter the name of the person you lent the book to.')
       return
     }
-
-    // Update local state immediately for instant visual feedback
-    const updatedBook = { 
-      ...book, 
-      status: 'lent' as const,
-      lentTo: lentToName.trim()
-    }
-    setBook(updatedBook)
 
     try {
       await updateBook(book.id, { 
@@ -180,8 +164,6 @@ export default function BookProfile() {
       setLentToName('')
     } catch (error) {
       console.error('Error updating book status:', error)
-      // Revert the local state on error
-      setBook(book)
       alert('Failed to update book status. Please try again.')
     }
   }
