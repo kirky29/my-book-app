@@ -941,14 +941,14 @@ export default function BookTracker() {
         )}
       </div>
 
-      {/* Floating Action Button */}
-      <div className="fab-bottom-right">
+      {/* Floating Action Button - Always Visible */}
+      <div className="fab-bottom-right animate-float">
         <button
           onClick={() => setShowQuickActions(true)}
-          className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center justify-center active:scale-95 hover:from-blue-700 hover:to-blue-800"
+          className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-floating hover:shadow-floating-hover transition-all duration-300 flex items-center justify-center active:scale-95 hover:from-blue-700 hover:to-blue-800 hover:scale-105 border-2 border-white/20"
           title="Add Book"
         >
-          <Plus className="w-8 h-8" />
+          <Plus className="w-8 h-8 drop-shadow-sm" />
         </button>
       </div>
 
