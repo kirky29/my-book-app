@@ -123,19 +123,40 @@ export default function BookProfile() {
               {/* Status Badge */}
               <div className="flex items-center gap-2 mb-3">
                 <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-                  book.status === 'owned' 
+                  ['physical', 'digital', 'both'].includes(book.status)
                     ? 'bg-green-100 text-green-800' 
+                    : book.status === 'read'
+                    ? 'bg-blue-100 text-blue-800'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {book.status === 'owned' ? (
+                  {book.status === 'physical' && (
                     <>
                       <Check className="w-4 h-4" />
-                      Owned
+                      📚 Physical Copy
                     </>
-                  ) : (
+                  )}
+                  {book.status === 'digital' && (
+                    <>
+                      <Check className="w-4 h-4" />
+                      📱 Digital Copy
+                    </>
+                  )}
+                  {book.status === 'both' && (
+                    <>
+                      <Check className="w-4 h-4" />
+                      📚📱 Both Formats
+                    </>
+                  )}
+                  {book.status === 'read' && (
+                    <>
+                      <Check className="w-4 h-4" />
+                      ✅ Read It
+                    </>
+                  )}
+                  {book.status === 'wishlist' && (
                     <>
                       <Eye className="w-4 h-4" />
-                      Wishlist
+                      🔖 Want to Read
                     </>
                   )}
                 </span>

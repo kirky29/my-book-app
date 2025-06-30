@@ -37,7 +37,7 @@ export default function BookTracker() {
   const [newBook, setNewBook] = useState({ 
     title: '', 
     author: '', 
-    status: 'owned' as 'owned' | 'wishlist', 
+    status: 'physical' as 'physical' | 'digital' | 'both' | 'read' | 'wishlist', 
     cover: '', 
     isbn: '',
     description: '',
@@ -46,7 +46,7 @@ export default function BookTracker() {
     publisher: '',
     categories: [] as string[]
   })
-  const [filter, setFilter] = useState<'all' | 'owned' | 'wishlist'>('all')
+  const [filter, setFilter] = useState<'all' | 'owned' | 'wishlist' | 'read'>('all')
   const [googleSearchTerm, setGoogleSearchTerm] = useState('')
   const [googleSearchResults, setGoogleSearchResults] = useState<GoogleBook[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -104,7 +104,7 @@ export default function BookTracker() {
         setNewBook({ 
           title: '', 
           author: '', 
-          status: 'owned', 
+          status: 'physical', 
           cover: '', 
           isbn: '',
           description: '',
@@ -185,7 +185,16 @@ export default function BookTracker() {
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          book.author.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filter === 'all' || book.status === filter
+    
+    let matchesFilter = false
+    if (filter === 'all') {
+      matchesFilter = true
+    } else if (filter === 'owned') {
+      matchesFilter = ['physical', 'digital', 'both'].includes(book.status)
+    } else {
+      matchesFilter = book.status === filter
+    }
+    
     return matchesSearch && matchesFilter
   })
 
@@ -198,8 +207,9 @@ export default function BookTracker() {
     }
   }
 
-  const ownedCount = books.filter(book => book.status === 'owned').length
+  const ownedCount = books.filter(book => ['physical', 'digital', 'both'].includes(book.status)).length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
+  const readCount = books.filter(book => book.status === 'read').length
 
   return (
     <div className="flex flex-col h-screen">
@@ -301,19 +311,40 @@ export default function BookTracker() {
                   <p className="text-sm text-gray-600 truncate">{book.author}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                      book.status === 'owned' 
+                      ['physical', 'digital', 'both'].includes(book.status)
                         ? 'bg-green-100 text-green-800' 
+                        : book.status === 'read'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {book.status === 'owned' ? (
+                      {book.status === 'physical' && (
                         <>
                           <Check className="w-3 h-3" />
-                          Owned
+                          📚 Physical
                         </>
-                      ) : (
+                      )}
+                      {book.status === 'digital' && (
+                        <>
+                          <Check className="w-3 h-3" />
+                          📱 Digital
+                        </>
+                      )}
+                      {book.status === 'both' && (
+                        <>
+                          <Check className="w-3 h-3" />
+                          📚📱 Both
+                        </>
+                      )}
+                      {book.status === 'read' && (
+                        <>
+                          <Check className="w-3 h-3" />
+                          ✅ Read
+                        </>
+                      )}
+                      {book.status === 'wishlist' && (
                         <>
                           <Eye className="w-3 h-3" />
-                          Wishlist
+                          🔖 Wishlist
                         </>
                       )}
                     </span>
@@ -321,21 +352,6 @@ export default function BookTracker() {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-3">
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation()
-                      try {
-                        await toggleBookStatus(book.id)
-                      } catch (error) {
-                        console.error('Error toggling book status:', error)
-                        alert('Failed to update book status. Please try again.')
-                      }
-                    }}
-                    className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
-                    title={`Mark as ${book.status === 'owned' ? 'wishlist' : 'owned'}`}
-                  >
-                    {book.status === 'owned' ? <Eye className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                  </button>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>
               </div>
@@ -575,29 +591,81 @@ export default function BookTracker() {
             
             {/* Status Selection */}
             <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-700">Add to Library</h4>
+              <h4 className="text-sm font-medium text-gray-700">How would you categorize this book?</h4>
               <div className="grid grid-cols-2 gap-3">
+                {/* Physical Copy */}
                 <button
-                  onClick={() => setNewBook(prev => ({ ...prev, status: 'owned' }))}
-                  className={`btn flex flex-col items-center gap-2 py-4 h-auto ${newBook.status === 'owned' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setNewBook(prev => ({ ...prev, status: 'physical' }))}
+                  className={`btn flex flex-col items-center gap-2 py-4 h-auto ${newBook.status === 'physical' ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  <Check className="w-5 h-5" />
+                  <div className="flex items-center gap-1">
+                    <Check className="w-5 h-5" />
+                    <span className="text-lg">📚</span>
+                  </div>
                   <div className="text-center">
-                    <div className="font-medium">I Own This</div>
-                    <div className="text-xs opacity-75">Add to my collection</div>
+                    <div className="font-medium">Physical Copy</div>
+                    <div className="text-xs opacity-75">I own the paperback/hardcover</div>
                   </div>
                 </button>
+
+                {/* Digital Copy */}
                 <button
-                  onClick={() => setNewBook(prev => ({ ...prev, status: 'wishlist' }))}
-                  className={`btn flex flex-col items-center gap-2 py-4 h-auto ${newBook.status === 'wishlist' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setNewBook(prev => ({ ...prev, status: 'digital' }))}
+                  className={`btn flex flex-col items-center gap-2 py-4 h-auto ${newBook.status === 'digital' ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  <Eye className="w-5 h-5" />
+                  <div className="flex items-center gap-1">
+                    <Check className="w-5 h-5" />
+                    <span className="text-lg">📱</span>
+                  </div>
                   <div className="text-center">
-                    <div className="font-medium">Wishlist</div>
-                    <div className="text-xs opacity-75">Want to read later</div>
+                    <div className="font-medium">Digital Copy</div>
+                    <div className="text-xs opacity-75">Kindle, audiobook, or ebook</div>
+                  </div>
+                </button>
+
+                {/* Both Formats */}
+                <button
+                  onClick={() => setNewBook(prev => ({ ...prev, status: 'both' }))}
+                  className={`btn flex flex-col items-center gap-2 py-4 h-auto ${newBook.status === 'both' ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  <div className="flex items-center gap-1">
+                    <Check className="w-5 h-5" />
+                    <span className="text-lg">📚📱</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-medium">Both Formats</div>
+                    <div className="text-xs opacity-75">I own physical + digital</div>
+                  </div>
+                </button>
+
+                {/* Read but Don't Own */}
+                <button
+                  onClick={() => setNewBook(prev => ({ ...prev, status: 'read' }))}
+                  className={`btn flex flex-col items-center gap-2 py-4 h-auto ${newBook.status === 'read' ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  <div className="flex items-center gap-1">
+                    <Check className="w-5 h-5" />
+                    <span className="text-lg">✅</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-medium">Read It</div>
+                    <div className="text-xs opacity-75">Borrowed, library, or finished</div>
                   </div>
                 </button>
               </div>
+              
+              {/* Wishlist as separate row */}
+              <button
+                onClick={() => setNewBook(prev => ({ ...prev, status: 'wishlist' }))}
+                className={`btn flex items-center justify-center gap-3 py-4 w-full ${newBook.status === 'wishlist' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                <Eye className="w-5 h-5" />
+                <span className="text-lg">🔖</span>
+                <div className="text-center">
+                  <div className="font-medium">Want to Read</div>
+                  <div className="text-xs opacity-75">Add to my wishlist</div>
+                </div>
+              </button>
             </div>
             
             {/* Action Buttons */}
@@ -610,7 +678,7 @@ export default function BookTracker() {
                     setNewBook({ 
                       title: '', 
                       author: '', 
-                      status: 'owned', 
+                      status: 'physical', 
                       cover: '', 
                       isbn: '',
                       description: '',

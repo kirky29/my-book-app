@@ -19,7 +19,7 @@ interface Book {
   id: string
   title: string
   author: string
-  status: 'owned' | 'wishlist'
+  status: 'physical' | 'digital' | 'both' | 'read' | 'wishlist'
   dateAdded: string
   cover?: string
   isbn?: string
@@ -150,9 +150,28 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   const toggleBookStatus = async (id: string) => {
     const book = getBook(id)
     if (book) {
-      await updateBook(id, {
-        status: book.status === 'owned' ? 'wishlist' : 'owned'
-      })
+      // Cycle through ownership statuses: wishlist -> physical -> digital -> both -> read -> wishlist
+      let newStatus: Book['status']
+      switch (book.status) {
+        case 'wishlist':
+          newStatus = 'physical'
+          break
+        case 'physical':
+          newStatus = 'digital'
+          break
+        case 'digital':
+          newStatus = 'both'
+          break
+        case 'both':
+          newStatus = 'read'
+          break
+        case 'read':
+          newStatus = 'wishlist'
+          break
+        default:
+          newStatus = 'physical'
+      }
+      await updateBook(id, { status: newStatus })
     }
   }
 
