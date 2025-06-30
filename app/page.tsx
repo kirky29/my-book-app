@@ -94,22 +94,38 @@ export default function BookTracker() {
   const handleAddBook = async () => {
     if (newBook.title.trim() && newBook.author.trim()) {
       try {
-        // Simplified book data - only include essential fields
-        const bookData = {
+        // Create book data object with proper typing, excluding undefined values
+        const bookData: any = {
           title: newBook.title.trim(),
           author: newBook.author.trim(),
           status: newBook.status,
           readStatus: newBook.readStatus,
-          cover: newBook.cover || undefined,
-          isbn: newBook.isbn || undefined,
-          description: newBook.description || undefined,
-          pageCount: newBook.pageCount || undefined,
-          publishedDate: newBook.publishedDate || undefined,
-          publisher: newBook.publisher || undefined,
-          categories: newBook.categories?.length > 0 ? newBook.categories : undefined
         }
         
-        console.log('Adding book with data:', bookData)
+        // Only add optional fields if they have values
+        if (newBook.cover && newBook.cover.trim()) {
+          bookData.cover = newBook.cover.trim()
+        }
+        if (newBook.isbn && newBook.isbn.trim()) {
+          bookData.isbn = newBook.isbn.trim()
+        }
+        if (newBook.description && newBook.description.trim()) {
+          bookData.description = newBook.description.trim()
+        }
+        if (newBook.pageCount && typeof newBook.pageCount === 'number') {
+          bookData.pageCount = newBook.pageCount
+        }
+        if (newBook.publishedDate && newBook.publishedDate.trim()) {
+          bookData.publishedDate = newBook.publishedDate.trim()
+        }
+        if (newBook.publisher && newBook.publisher.trim()) {
+          bookData.publisher = newBook.publisher.trim()
+        }
+        if (newBook.categories && newBook.categories.length > 0) {
+          bookData.categories = newBook.categories
+        }
+        
+        console.log('Adding book with cleaned data:', bookData)
         await addBook(bookData)
         resetForm()
       } catch (error) {
