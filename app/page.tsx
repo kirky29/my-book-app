@@ -425,11 +425,7 @@ export default function BookTracker() {
       <header className="header-gradient text-white safe-area-top">
         <div className="px-6 py-4">
           {/* Settings & Actions */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-white/90 text-sm">Welcome back!</p>
-              <p className="font-semibold text-white">Your personal library</p>
-            </div>
+          <div className="flex items-center justify-end mb-4">
             <button
               onClick={() => router.push('/settings')}
               className="p-3 hover:bg-white/10 rounded-xl transition-colors"
