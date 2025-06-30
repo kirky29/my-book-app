@@ -14,6 +14,7 @@ export default function BookProfile() {
   const [notes, setNotes] = useState(book?.notes || '')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showReadingStatusDropdown, setShowReadingStatusDropdown] = useState(false)
   const [showLentPrompt, setShowLentPrompt] = useState(false)
   const [lentToName, setLentToName] = useState('')
 
@@ -99,7 +100,7 @@ export default function BookProfile() {
     }
   }
 
-  const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent') => {
+  const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none') => {
     try {
       if (newStatus === 'lent') {
         // Show prompt for person's name
@@ -125,6 +126,21 @@ export default function BookProfile() {
     } catch (error) {
       console.error('Error updating book status:', error)
       alert('Failed to update book status. Please try again.')
+    }
+  }
+
+  const handleReadingStatusChange = async (newReadStatus: 'unread' | 'reading' | 'read') => {
+    try {
+      await updateBook(book.id, { readStatus: newReadStatus })
+      // Update local state to reflect the new reading status
+      const updatedBook = getBook(book.id)
+      if (updatedBook) {
+        setBook(updatedBook)
+      }
+      setShowReadingStatusDropdown(false)
+    } catch (error) {
+      console.error('Error updating reading status:', error)
+      alert('Failed to update reading status. Please try again.')
     }
   }
 
@@ -202,13 +218,12 @@ export default function BookProfile() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">{book.title}</h1>
               <p className="text-lg text-gray-600 mb-4">{book.author}</p>
               
-              {/* Status Badge */}
-              <div className="mb-4">
+              {/* Status Badges */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {/* Ownership Status Badge */}
                 <span className={`status-badge ${
                   ['physical', 'digital', 'both'].includes(book.status)
                     ? 'status-owned' 
-                    : book.status === 'read'
-                    ? 'status-read'
                     : book.status === 'lent'
                     ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200'
                     : 'status-wishlist'
@@ -231,12 +246,6 @@ export default function BookProfile() {
                       Both Formats
                     </>
                   )}
-                  {book.status === 'read' && (
-                    <>
-                      <BookCheck className="w-4 h-4" />
-                      Read It
-                    </>
-                  )}
                   {book.status === 'lent' && (
                     <>
                       <UserCheck className="w-4 h-4" />
@@ -249,11 +258,39 @@ export default function BookProfile() {
                       Want to Read
                     </>
                   )}
+                  {book.status === 'none' && (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      Not Owned
+                    </>
+                  )}
                 </span>
+
+                {/* Reading Status Badge */}
+                {book.readStatus && book.readStatus !== 'unread' && (
+                  <span className={`status-badge ${
+                    book.readStatus === 'read' 
+                      ? 'status-read'
+                      : 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 border border-purple-200'
+                  }`}>
+                    {book.readStatus === 'read' && (
+                      <>
+                        <BookCheck className="w-4 h-4" />
+                        Finished Reading
+                      </>
+                    )}
+                    {book.readStatus === 'reading' && (
+                      <>
+                        <BookOpen className="w-4 h-4" />
+                        Currently Reading
+                      </>
+                    )}
+                  </span>
+                )}
               </div>
 
-              {/* Quick Action Button */}
-              <div className="flex justify-start">
+              {/* Action Buttons */}
+              <div className="flex gap-3">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -261,14 +298,24 @@ export default function BookProfile() {
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm"
                 >
-                  <Check className="w-4 h-4" />
-                  Change Status
+                  <Library className="w-4 h-4" />
+                  Ownership
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowReadingStatusDropdown(!showReadingStatusDropdown)
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm"
+                >
+                  <BookCheck className="w-4 h-4" />
+                  Reading
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Status Dropdown */}
+          {/* Ownership Status Dropdown */}
           {showStatusDropdown && (
             <div className="card p-2 mb-6">
               <div className="space-y-1">
@@ -321,19 +368,19 @@ export default function BookProfile() {
                 </button>
                 
                 <button
-                  onClick={() => handleStatusChange('read')}
+                  onClick={() => handleStatusChange('none')}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
-                    book.status === 'read' ? 'bg-indigo-50 text-indigo-800' : 'text-gray-700 hover:bg-gray-50'
+                    book.status === 'none' ? 'bg-gray-50 text-gray-800' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <BookCheck className="w-4 h-4 text-indigo-600" />
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Eye className="w-4 h-4 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold">Read It</div>
-                    <div className="text-sm opacity-70">Borrowed, library, or finished</div>
+                    <div className="font-semibold">Not Owned</div>
+                    <div className="text-sm opacity-70">Read but don't own a copy</div>
                   </div>
-                  {book.status === 'read' && <Check className="w-5 h-5 text-indigo-600" />}
+                  {book.status === 'none' && <Check className="w-5 h-5 text-gray-600" />}
                 </button>
 
                 <button
@@ -366,6 +413,61 @@ export default function BookProfile() {
                     <div className="text-sm opacity-70">Add to wishlist</div>
                   </div>
                   {book.status === 'wishlist' && <Check className="w-5 h-5 text-amber-600" />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Reading Status Dropdown */}
+          {showReadingStatusDropdown && (
+            <div className="card p-2 mb-6">
+              <div className="space-y-1">
+                <button
+                  onClick={() => handleReadingStatusChange('unread')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.readStatus === 'unread' ? 'bg-gray-50 text-gray-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Not Started</div>
+                    <div className="text-sm opacity-70">Haven't begun reading</div>
+                  </div>
+                  {book.readStatus === 'unread' && <Check className="w-5 h-5 text-gray-600" />}
+                </button>
+                
+                <button
+                  onClick={() => handleReadingStatusChange('reading')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.readStatus === 'reading' ? 'bg-purple-50 text-purple-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Currently Reading</div>
+                    <div className="text-sm opacity-70">Making progress through the book</div>
+                  </div>
+                  {book.readStatus === 'reading' && <Check className="w-5 h-5 text-purple-600" />}
+                </button>
+                
+                <button
+                  onClick={() => handleReadingStatusChange('read')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.readStatus === 'read' ? 'bg-indigo-50 text-indigo-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <BookCheck className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Finished</div>
+                    <div className="text-sm opacity-70">Completed reading</div>
+                  </div>
+                  {book.readStatus === 'read' && <Check className="w-5 h-5 text-indigo-600" />}
                 </button>
               </div>
             </div>
