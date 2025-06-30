@@ -78,7 +78,11 @@ export default function BookProfile() {
   const handleToggleStatus = async () => {
     try {
       await toggleBookStatus(book.id)
-      setBook(prev => prev ? { ...prev, status: prev.status === 'owned' ? 'wishlist' : 'owned' } : prev)
+      // Update local state to reflect the new status from the context
+      const updatedBook = getBook(book.id)
+      if (updatedBook) {
+        setBook(updatedBook)
+      }
     } catch (error) {
       console.error('Error toggling book status:', error)
       alert('Failed to update book status. Please try again.')
@@ -166,19 +170,10 @@ export default function BookProfile() {
               <div className="flex gap-2">
                 <button
                   onClick={handleToggleStatus}
-                  className={`btn text-sm ${book.status === 'owned' ? 'btn-secondary' : 'btn-primary'}`}
+                  className="btn btn-secondary text-sm"
                 >
-                  {book.status === 'owned' ? (
-                    <>
-                      <Eye className="w-4 h-4 mr-1" />
-                      Move to Wishlist
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4 mr-1" />
-                      Mark as Owned
-                    </>
-                  )}
+                  <Check className="w-4 h-4 mr-1" />
+                  Change Status
                 </button>
               </div>
             </div>
