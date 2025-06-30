@@ -109,11 +109,14 @@ export default function BookTracker() {
           categories: newBook.categories?.length > 0 ? newBook.categories : undefined
         }
         
+        console.log('Adding book with data:', bookData)
         await addBook(bookData)
         resetForm()
       } catch (error) {
         console.error('Error adding book:', error)
-        alert('Failed to add book. Please try again.')
+        // More specific error message
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+        alert(`Failed to add book: ${errorMessage}. Please try again.`)
       }
     }
   }
@@ -145,18 +148,30 @@ export default function BookTracker() {
       id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
     )?.identifier || ''
     
+    // Validate and clean all fields to ensure they're safe for Firebase
+    const title = googleBook.volumeInfo.title?.trim() || 'Unknown Title'
+    const author = authors.join(', ').trim() || 'Unknown Author'
+    const cover = googleBook.volumeInfo.imageLinks?.thumbnail || ''
+    const description = googleBook.volumeInfo.description?.trim() || ''
+    const pageCount = typeof googleBook.volumeInfo.pageCount === 'number' ? googleBook.volumeInfo.pageCount : undefined
+    const publishedDate = googleBook.volumeInfo.publishedDate?.trim() || ''
+    const publisher = googleBook.volumeInfo.publisher?.trim() || ''
+    const categories = Array.isArray(googleBook.volumeInfo.categories) ? googleBook.volumeInfo.categories : []
+    
+    console.log('Selected Google Book:', { title, author, cover, isbn, description, pageCount, publishedDate, publisher, categories })
+    
     setNewBook({
-      title: googleBook.volumeInfo.title,
-      author: authors.join(', '),
+      title,
+      author,
       status: newBook.status,
       readStatus: 'unread',
-      cover: googleBook.volumeInfo.imageLinks?.thumbnail || '',
-      isbn: isbn,
-      description: googleBook.volumeInfo.description || '',
-      pageCount: googleBook.volumeInfo.pageCount,
-      publishedDate: googleBook.volumeInfo.publishedDate || '',
-      publisher: googleBook.volumeInfo.publisher || '',
-      categories: googleBook.volumeInfo.categories || []
+      cover,
+      isbn: isbn.trim(),
+      description,
+      pageCount,
+      publishedDate,
+      publisher,
+      categories
     })
     setGoogleSearchResults([])
     setGoogleSearchTerm('')
@@ -170,6 +185,8 @@ export default function BookTracker() {
     // Clean up the scanned code (remove any non-digit characters except X for ISBN-10)
     const cleanedCode = scannedCode.replace(/[^\dX]/gi, '')
     
+    console.log('Scanned barcode:', scannedCode, 'Cleaned:', cleanedCode)
+    
     if (cleanedCode.length >= 10) {
       // Search Google Books using the scanned ISBN
       try {
@@ -178,8 +195,11 @@ export default function BookTracker() {
         )
         const data = await response.json()
         
+        console.log('ISBN search response:', data)
+        
         if (data.items && data.items.length > 0) {
           // Auto-select the first result
+          console.log('Found book via ISBN:', data.items[0])
           selectGoogleBook(data.items[0])
         } else {
           // If no results found, set the ISBN and let user search manually
