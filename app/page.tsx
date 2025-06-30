@@ -37,7 +37,8 @@ export default function BookTracker() {
   const [newBook, setNewBook] = useState({ 
     title: '', 
     author: '', 
-    status: 'physical' as 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent', 
+    status: 'physical' as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none', 
+    readStatus: 'unread' as 'unread' | 'reading' | 'read',
     cover: '', 
     isbn: '',
     description: '',
@@ -93,6 +94,7 @@ export default function BookTracker() {
           title: newBook.title.trim(),
           author: newBook.author.trim(),
           status: newBook.status,
+          readStatus: newBook.readStatus,
           cover: newBook.cover,
           isbn: newBook.isbn,
           description: newBook.description,
@@ -106,6 +108,7 @@ export default function BookTracker() {
           title: '', 
           author: '', 
           status: 'physical', 
+          readStatus: 'unread',
           cover: '', 
           isbn: '',
           description: '',
@@ -140,7 +143,8 @@ export default function BookTracker() {
       pageCount: googleBook.volumeInfo.pageCount,
       publishedDate: googleBook.volumeInfo.publishedDate || '',
       publisher: googleBook.volumeInfo.publisher || '',
-      categories: googleBook.volumeInfo.categories || []
+      categories: googleBook.volumeInfo.categories || [],
+      readStatus: 'unread'
     })
     setGoogleSearchResults([])
     setGoogleSearchTerm('')
@@ -197,6 +201,8 @@ export default function BookTracker() {
       } else if (subFilter === 'digital') {
         matchesFilter = ['digital', 'both'].includes(book.status)
       }
+    } else if (filter === 'read') {
+      matchesFilter = book.readStatus === 'read'
     } else {
       matchesFilter = book.status === filter
     }
@@ -215,7 +221,7 @@ export default function BookTracker() {
 
   const ownedCount = books.filter(book => ['physical', 'digital', 'both'].includes(book.status)).length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
-  const readCount = books.filter(book => book.status === 'read').length
+  const readCount = books.filter(book => book.readStatus === 'read').length
   const lentCount = books.filter(book => book.status === 'lent').length
 
   return (
@@ -457,52 +463,75 @@ export default function BookTracker() {
 
                     {/* Status and Date */}
                     <div className="flex items-center justify-between">
-                      <span className={`status-badge ${
-                        ['physical', 'digital', 'both'].includes(book.status)
-                          ? 'status-owned' 
-                          : book.status === 'read'
-                          ? 'status-read'
-                          : book.status === 'lent'
-                          ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200'
-                          : 'status-wishlist'
-                      }`}>
-                        {book.status === 'physical' && (
-                          <>
-                            <Library className="w-4 h-4" />
-                            Physical
-                          </>
+                      <div className="flex items-center gap-2">
+                        {/* Ownership Status Badge */}
+                        <span className={`status-badge ${
+                          ['physical', 'digital', 'both'].includes(book.status)
+                            ? 'status-owned' 
+                            : book.status === 'lent'
+                            ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200'
+                            : 'status-wishlist'
+                        }`}>
+                          {book.status === 'physical' && (
+                            <>
+                              <Library className="w-4 h-4" />
+                              Physical
+                            </>
+                          )}
+                          {book.status === 'digital' && (
+                            <>
+                              <BookOpen className="w-4 h-4" />
+                              Digital
+                            </>
+                          )}
+                          {book.status === 'both' && (
+                            <>
+                              <Star className="w-4 h-4" />
+                              Both Formats
+                            </>
+                          )}
+                          {book.status === 'lent' && (
+                            <>
+                              <UserCheck className="w-4 h-4" />
+                              Lent to {book.lentTo || 'Someone'}
+                            </>
+                          )}
+                          {book.status === 'wishlist' && (
+                            <>
+                              <Heart className="w-4 h-4" />
+                              Wishlist
+                            </>
+                          )}
+                          {book.status === 'none' && (
+                            <>
+                              <Eye className="w-4 h-4" />
+                              Not Owned
+                            </>
+                          )}
+                        </span>
+
+                        {/* Reading Status Badge */}
+                        {book.readStatus !== 'unread' && (
+                          <span className={`status-badge ${
+                            book.readStatus === 'read' 
+                              ? 'status-read'
+                              : 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 border border-purple-200'
+                          }`}>
+                            {book.readStatus === 'read' && (
+                              <>
+                                <BookCheck className="w-4 h-4" />
+                                Read
+                              </>
+                            )}
+                            {book.readStatus === 'reading' && (
+                              <>
+                                <BookOpen className="w-4 h-4" />
+                                Reading
+                              </>
+                            )}
+                          </span>
                         )}
-                        {book.status === 'digital' && (
-                          <>
-                            <BookOpen className="w-4 h-4" />
-                            Digital
-                          </>
-                        )}
-                        {book.status === 'both' && (
-                          <>
-                            <Star className="w-4 h-4" />
-                            Both Formats
-                          </>
-                        )}
-                        {book.status === 'read' && (
-                          <>
-                            <BookCheck className="w-4 h-4" />
-                            Read
-                          </>
-                        )}
-                        {book.status === 'lent' && (
-                          <>
-                            <UserCheck className="w-4 h-4" />
-                            Lent to {book.lentTo || 'Someone'}
-                          </>
-                        )}
-                        {book.status === 'wishlist' && (
-                          <>
-                            <Heart className="w-4 h-4" />
-                            Wishlist
-                          </>
-                        )}
-                      </span>
+                      </div>
                       <span className="text-xs text-gray-400 ml-2">
                         {book.dateAdded}
                       </span>
@@ -696,16 +725,32 @@ export default function BookTracker() {
                       value={newBook.status}
                       onChange={(e) => setNewBook(prev => ({ 
                         ...prev, 
-                        status: e.target.value as 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent'
+                        status: e.target.value as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none'
                       }))}
                       className="input"
                     >
                       <option value="physical">📚 Physical Copy</option>
                       <option value="digital">📱 Digital Copy</option>
                       <option value="both">⭐ Both Formats</option>
-                      <option value="read">✅ Read It</option>
                       <option value="wishlist">❤️ Want to Read</option>
-                      <option value="lent">👤 Lent Out</option>
+                      <option value="lent"> Lent Out</option>
+                      <option value="none">🤷‍♂️ Not Owned</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Reading Status</label>
+                    <select
+                      value={newBook.readStatus}
+                      onChange={(e) => setNewBook(prev => ({ 
+                        ...prev, 
+                        readStatus: e.target.value as 'unread' | 'reading' | 'read'
+                      }))}
+                      className="input"
+                    >
+                      <option value="unread">📖 Not Started</option>
+                      <option value="reading">📚 Currently Reading</option>
+                      <option value="read">✅ Finished</option>
                     </select>
                   </div>
 

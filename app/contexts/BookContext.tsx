@@ -19,7 +19,8 @@ interface Book {
   id: string
   title: string
   author: string
-  status: 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent'
+  status: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none' // Ownership status
+  readStatus: 'unread' | 'reading' | 'read' // Reading progress
   dateAdded: string
   cover?: string
   isbn?: string
@@ -77,6 +78,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           title: data.title,
           author: data.author,
           status: data.status,
+          readStatus: data.readStatus || 'unread', // Default for existing books
           dateAdded: data.dateAdded,
           cover: data.cover,
           isbn: data.isbn,
@@ -108,6 +110,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
       const booksRef = collection(db, 'users', user.uid, 'books')
       await addDoc(booksRef, {
         ...bookData,
+        readStatus: bookData.readStatus || 'unread', // Default to unread
         dateAdded: new Date().toISOString().split('T')[0],
         notes: bookData.notes || ''
       })
@@ -152,7 +155,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   const toggleBookStatus = async (id: string) => {
     const book = getBook(id)
     if (book) {
-      // Cycle through ownership statuses: wishlist -> physical -> digital -> both -> read -> lent -> wishlist
+      // Cycle through ownership statuses: wishlist -> physical -> digital -> both -> lent -> none -> wishlist
       let newStatus: Book['status']
       switch (book.status) {
         case 'wishlist':
@@ -165,12 +168,12 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           newStatus = 'both'
           break
         case 'both':
-          newStatus = 'read'
-          break
-        case 'read':
           newStatus = 'lent'
           break
         case 'lent':
+          newStatus = 'none'
+          break
+        case 'none':
           newStatus = 'wishlist'
           break
         default:
