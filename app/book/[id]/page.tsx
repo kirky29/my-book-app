@@ -102,59 +102,57 @@ export default function BookProfile() {
   }
 
   const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none') => {
+    if (newStatus === 'lent') {
+      setShowStatusDropdown(false)
+      setShowLentPrompt(true)
+      return
+    }
+
+    // Update local state immediately for instant visual feedback
+    const updatedBook = { ...book, status: newStatus }
+    setBook(updatedBook)
+
     try {
-      if (newStatus === 'lent') {
-        // Show prompt for person's name
-        setShowLentPrompt(true)
-        setShowStatusDropdown(false)
-        setLentToName('')
-        return
-      }
-
-      // Clear lentTo when changing away from lent status
-      const updateData: any = { status: newStatus }
-      if (book.status === 'lent') {
-        updateData.lentTo = null
-      }
-
-      await updateBook(book.id, updateData)
-      // Update local state to reflect the new status
-      const updatedBook = getBook(book.id)
-      if (updatedBook) {
-        setBook(updatedBook)
-      }
+      await updateBook(book.id, { status: newStatus })
       setShowStatusDropdown(false)
     } catch (error) {
       console.error('Error updating book status:', error)
+      // Revert the local state on error
+      setBook(book)
       alert('Failed to update book status. Please try again.')
     }
   }
 
   const handleReadingStatusChange = async (newReadStatus: 'unread' | 'reading' | 'read') => {
+    // Update local state immediately for instant visual feedback
+    const updatedBook = { ...book, readStatus: newReadStatus }
+    setBook(updatedBook)
+
     try {
       await updateBook(book.id, { readStatus: newReadStatus })
-      // Update local state to reflect the new reading status
-      const updatedBook = getBook(book.id)
-      if (updatedBook) {
-        setBook(updatedBook)
-      }
       setShowReadingStatusDropdown(false)
     } catch (error) {
       console.error('Error updating reading status:', error)
+      // Revert the local state on error
+      setBook(book)
       alert('Failed to update reading status. Please try again.')
     }
   }
 
   const handleRatingChange = async (newRating: number) => {
+    // Update local state immediately for instant visual feedback
+    const updatedBook = {
+      ...book,
+      rating: newRating === 0 ? undefined : newRating
+    }
+    setBook(updatedBook)
+
     try {
       await updateBook(book.id, { rating: newRating === 0 ? undefined : newRating })
-      // Update local state to reflect the new rating
-      const updatedBook = getBook(book.id)
-      if (updatedBook) {
-        setBook(updatedBook)
-      }
     } catch (error) {
       console.error('Error updating rating:', error)
+      // Revert the local state on error
+      setBook(book)
       alert('Failed to update rating. Please try again.')
     }
   }
@@ -165,20 +163,25 @@ export default function BookProfile() {
       return
     }
 
+    // Update local state immediately for instant visual feedback
+    const updatedBook = { 
+      ...book, 
+      status: 'lent' as const,
+      lentTo: lentToName.trim()
+    }
+    setBook(updatedBook)
+
     try {
       await updateBook(book.id, { 
         status: 'lent',
         lentTo: lentToName.trim()
       })
-      // Update local state
-      const updatedBook = getBook(book.id)
-      if (updatedBook) {
-        setBook(updatedBook)
-      }
       setShowLentPrompt(false)
       setLentToName('')
     } catch (error) {
       console.error('Error updating book status:', error)
+      // Revert the local state on error
+      setBook(book)
       alert('Failed to update book status. Please try again.')
     }
   }

@@ -127,11 +127,20 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('User must be authenticated to update books')
     }
     
+    // Optimistically update local state immediately
+    setBooks(prevBooks => 
+      prevBooks.map(book => 
+        book.id === id ? { ...book, ...updates } : book
+      )
+    )
+    
     try {
       const bookRef = doc(db, 'users', user.uid, 'books', id)
       await updateDoc(bookRef, updates)
     } catch (error) {
       console.error('Error updating book:', error)
+      // The onSnapshot listener will automatically revert the change if it fails
+      // since it will get the actual state from Firebase
       throw error
     }
   }
