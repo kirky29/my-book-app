@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag } from 'lucide-react'
+import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag, Star, Heart, Library, BookCheck, Share, Bookmark } from 'lucide-react'
 import { useBooks } from '../../contexts/BookContext'
 
 export default function BookProfile() {
@@ -40,26 +40,30 @@ export default function BookProfile() {
 
   if (!book) {
     return (
-      <div className="flex flex-col h-screen">
-        <header className="bg-primary-600 text-white p-4 shadow-lg">
-          <div className="flex items-center gap-3">
+      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <header className="header-gradient text-white safe-area-top">
+          <div className="flex items-center gap-3 px-6 py-4">
             <button 
               onClick={() => router.back()} 
-              className="p-2 hover:bg-primary-700 rounded-lg transition-colors"
+              className="p-3 hover:bg-white/10 rounded-xl transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-medium">Book Not Found</h1>
+            <h1 className="text-lg font-semibold">Book Not Found</h1>
           </div>
         </header>
-        <div className="flex-1 flex items-center justify-center text-gray-500">
+        <div className="flex-1 flex items-center justify-center px-6">
           <div className="text-center">
-            <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>This book could not be found.</p>
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="w-12 h-12 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Book Not Found</h2>
+            <p className="text-gray-600 mb-6">This book could not be found in your library.</p>
             <button 
               onClick={() => router.push('/')} 
-              className="mt-4 btn btn-primary"
+              className="btn btn-primary"
             >
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Library
             </button>
           </div>
@@ -109,185 +113,212 @@ export default function BookProfile() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
-      <header className="bg-primary-600 text-white p-4 shadow-lg">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => router.back()} 
-            className="p-2 hover:bg-primary-700 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-medium truncate">Book Details</h1>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Enhanced Header */}
+      <header className="header-gradient text-white safe-area-top">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.back()} 
+              className="p-3 hover:bg-white/10 rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-lg font-semibold">Book Details</h1>
+              <p className="text-white/80 text-sm">Your library</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-3 hover:bg-white/10 rounded-xl transition-colors">
+              <Share className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Book Cover and Basic Info */}
-        <div className="p-6 bg-gradient-to-b from-gray-50 to-white">
-          <div className="flex gap-4">
-            {book.cover ? (
-              <img 
-                src={book.cover} 
-                alt={book.title}
-                className="w-24 h-32 object-cover rounded-lg shadow-md flex-shrink-0"
-              />
-            ) : (
-              <div className="w-24 h-32 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-8 h-8 text-gray-400" />
-              </div>
-            )}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Hero Section with Book Cover */}
+        <div className="px-6 py-8 bg-gradient-to-b from-white/80 to-white/60 backdrop-blur-sm">
+          <div className="flex gap-6 mb-6">
+            {/* Book Cover */}
+            <div className="flex-shrink-0">
+              {book.cover ? (
+                <img 
+                  src={book.cover} 
+                  alt={book.title}
+                  className="w-28 h-40 object-cover rounded-2xl shadow-xl border border-gray-100"
+                />
+              ) : (
+                <div className="w-28 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-xl border border-gray-100">
+                  <BookOpen className="w-10 h-10 text-gray-400" />
+                </div>
+              )}
+            </div>
+
+            {/* Book Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h1>
-              <p className="text-gray-600 mb-3">{book.author}</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">{book.title}</h1>
+              <p className="text-lg text-gray-600 mb-4">{book.author}</p>
               
               {/* Status Badge */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+              <div className="mb-4">
+                <span className={`status-badge ${
                   ['physical', 'digital', 'both'].includes(book.status)
-                    ? 'bg-green-100 text-green-800' 
+                    ? 'status-owned' 
                     : book.status === 'read'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-yellow-100 text-yellow-800'
+                    ? 'status-read'
+                    : 'status-wishlist'
                 }`}>
                   {book.status === 'physical' && (
                     <>
-                      <Check className="w-4 h-4" />
-                      📚 Physical Copy
+                      <Library className="w-4 h-4" />
+                      Physical Copy
                     </>
                   )}
                   {book.status === 'digital' && (
                     <>
-                      <Check className="w-4 h-4" />
-                      📱 Digital Copy
+                      <BookOpen className="w-4 h-4" />
+                      Digital Copy
                     </>
                   )}
                   {book.status === 'both' && (
                     <>
-                      <Check className="w-4 h-4" />
-                      📚📱 Both Formats
+                      <Star className="w-4 h-4" />
+                      Both Formats
                     </>
                   )}
                   {book.status === 'read' && (
                     <>
-                      <Check className="w-4 h-4" />
-                      ✅ Read It
+                      <BookCheck className="w-4 h-4" />
+                      Read It
                     </>
                   )}
                   {book.status === 'wishlist' && (
                     <>
-                      <Eye className="w-4 h-4" />
-                      🔖 Want to Read
+                      <Heart className="w-4 h-4" />
+                      Want to Read
                     </>
                   )}
                 </span>
               </div>
 
-              {/* Quick Actions */}
-              <div className="flex gap-2 relative">
+              {/* Quick Action Buttons */}
+              <div className="flex gap-3">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowStatusDropdown(!showStatusDropdown)
                   }}
-                  className="btn btn-secondary text-sm"
+                  className="btn btn-secondary btn-sm flex-1 relative"
                 >
-                  <Check className="w-4 h-4 mr-1" />
+                  <Check className="w-4 h-4 mr-2" />
                   Change Status
                 </button>
-                
-                {/* Status Dropdown */}
-                {showStatusDropdown && (
-                  <div 
-                    className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="py-1">
-                      <button
-                        onClick={() => handleStatusChange('physical')}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                          book.status === 'physical' ? 'bg-green-50 text-green-800' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="text-base">📚</span>
-                        <div>
-                          <div className="font-medium">Physical Copy</div>
-                          <div className="text-xs text-gray-500">Own paperback/hardcover</div>
-                        </div>
-                        {book.status === 'physical' && <Check className="w-4 h-4 ml-auto text-green-600" />}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleStatusChange('digital')}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                          book.status === 'digital' ? 'bg-green-50 text-green-800' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="text-base">📱</span>
-                        <div>
-                          <div className="font-medium">Digital Copy</div>
-                          <div className="text-xs text-gray-500">Kindle, audiobook, or ebook</div>
-                        </div>
-                        {book.status === 'digital' && <Check className="w-4 h-4 ml-auto text-green-600" />}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleStatusChange('both')}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                          book.status === 'both' ? 'bg-green-50 text-green-800' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="text-base">📚📱</span>
-                        <div>
-                          <div className="font-medium">Both Formats</div>
-                          <div className="text-xs text-gray-500">Own physical + digital</div>
-                        </div>
-                        {book.status === 'both' && <Check className="w-4 h-4 ml-auto text-green-600" />}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleStatusChange('read')}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                          book.status === 'read' ? 'bg-blue-50 text-blue-800' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="text-base">✅</span>
-                        <div>
-                          <div className="font-medium">Read It</div>
-                          <div className="text-xs text-gray-500">Borrowed, library, or finished</div>
-                        </div>
-                        {book.status === 'read' && <Check className="w-4 h-4 ml-auto text-blue-600" />}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleStatusChange('wishlist')}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                          book.status === 'wishlist' ? 'bg-yellow-50 text-yellow-800' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="text-base">🔖</span>
-                        <div>
-                          <div className="font-medium">Want to Read</div>
-                          <div className="text-xs text-gray-500">Add to wishlist</div>
-                        </div>
-                        {book.status === 'wishlist' && <Check className="w-4 h-4 ml-auto text-yellow-600" />}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
+
+          {/* Status Dropdown */}
+          {showStatusDropdown && (
+            <div className="card p-2 mb-6">
+              <div className="space-y-1">
+                <button
+                  onClick={() => handleStatusChange('physical')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.status === 'physical' ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <Library className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Physical Copy</div>
+                    <div className="text-sm opacity-70">Own paperback/hardcover</div>
+                  </div>
+                  {book.status === 'physical' && <Check className="w-5 h-5 text-emerald-600" />}
+                </button>
+                
+                <button
+                  onClick={() => handleStatusChange('digital')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.status === 'digital' ? 'bg-blue-50 text-blue-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Digital Copy</div>
+                    <div className="text-sm opacity-70">Kindle, audiobook, or ebook</div>
+                  </div>
+                  {book.status === 'digital' && <Check className="w-5 h-5 text-blue-600" />}
+                </button>
+                
+                <button
+                  onClick={() => handleStatusChange('both')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.status === 'both' ? 'bg-purple-50 text-purple-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Star className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Both Formats</div>
+                    <div className="text-sm opacity-70">Own physical + digital</div>
+                  </div>
+                  {book.status === 'both' && <Check className="w-5 h-5 text-purple-600" />}
+                </button>
+                
+                <button
+                  onClick={() => handleStatusChange('read')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.status === 'read' ? 'bg-indigo-50 text-indigo-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <BookCheck className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Read It</div>
+                    <div className="text-sm opacity-70">Borrowed, library, or finished</div>
+                  </div>
+                  {book.status === 'read' && <Check className="w-5 h-5 text-indigo-600" />}
+                </button>
+                
+                <button
+                  onClick={() => handleStatusChange('wishlist')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.status === 'wishlist' ? 'bg-amber-50 text-amber-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <Heart className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Want to Read</div>
+                    <div className="text-sm opacity-70">Add to wishlist</div>
+                  </div>
+                  {book.status === 'wishlist' && <Check className="w-5 h-5 text-amber-600" />}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Book Details */}
-        <div className="p-6 space-y-6">
-          {/* Description */}
+        {/* Book Details Cards */}
+        <div className="px-6 space-y-6 pb-8">
+          {/* Description Card */}
           {book.description && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+            <div className="card p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-3 h-3 text-blue-600" />
+                </div>
+                Description
+              </h3>
               <div 
                 className="text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ 
@@ -297,60 +328,75 @@ export default function BookProfile() {
             </div>
           )}
 
-          {/* Book Information */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Book Information</h3>
-            <div className="space-y-3">
+          {/* Book Information Card */}
+          <div className="card p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <Tag className="w-3 h-3 text-emerald-600" />
+              </div>
+              Book Information
+            </h3>
+            <div className="space-y-4">
               {book.publisher && (
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">Publisher</span>
-                    <p className="text-gray-900">{book.publisher}</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Publisher</p>
+                    <p className="text-gray-900 font-semibold">{book.publisher}</p>
                   </div>
                 </div>
               )}
               
               {book.publishedDate && (
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">Published</span>
-                    <p className="text-gray-900">{book.publishedDate}</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Published</p>
+                    <p className="text-gray-900 font-semibold">{book.publishedDate}</p>
                   </div>
                 </div>
               )}
               
               {book.pageCount && (
-                <div className="flex items-center gap-3">
-                  <BookOpen className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">Pages</span>
-                    <p className="text-gray-900">{book.pageCount} pages</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <BookOpen className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Pages</p>
+                    <p className="text-gray-900 font-semibold">{book.pageCount} pages</p>
                   </div>
                 </div>
               )}
               
               {book.isbn && (
-                <div className="flex items-center gap-3">
-                  <Tag className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">ISBN</span>
-                    <p className="text-gray-900 font-mono text-sm">{book.isbn}</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Tag className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">ISBN</p>
+                    <p className="text-gray-900 font-mono text-sm font-semibold">{book.isbn}</p>
                   </div>
                 </div>
               )}
               
               {book.categories && book.categories.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-gray-400 mt-1" />
-                  <div>
-                    <span className="text-sm text-gray-500">Categories</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <User className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium mb-2">Categories</p>
+                    <div className="flex flex-wrap gap-2">
                       {book.categories.map((category, index) => (
                         <span 
                           key={index} 
-                          className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                          className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium"
                         >
                           {category}
                         </span>
@@ -360,24 +406,31 @@ export default function BookProfile() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <div>
-                  <span className="text-sm text-gray-500">Added to Library</span>
-                  <p className="text-gray-900">{book.dateAdded}</p>
+              <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-5 h-5 text-gray-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 font-medium">Added to Library</p>
+                  <p className="text-gray-900 font-semibold">{book.dateAdded}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Notes Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900">My Notes</h3>
+          {/* Notes Card */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Edit3 className="w-3 h-3 text-purple-600" />
+                </div>
+                My Notes
+              </h3>
               {!isEditingNotes && (
                 <button
                   onClick={() => setIsEditingNotes(true)}
-                  className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
@@ -385,46 +438,59 @@ export default function BookProfile() {
             </div>
             
             {isEditingNotes ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Add your thoughts, quotes, or reminders about this book..."
-                  className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full h-32 p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                   autoFocus
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     onClick={handleSaveNotes}
                     className="btn btn-primary flex-1"
                   >
-                    <Save className="w-4 h-4 mr-1" />
+                    <Save className="w-4 h-4 mr-2" />
                     Save Notes
                   </button>
                   <button
                     onClick={handleCancelNotes}
                     className="btn btn-secondary flex-1"
                   >
-                    <X className="w-4 h-4 mr-1" />
+                    <X className="w-4 h-4 mr-2" />
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <div className={`p-4 rounded-lg border-2 border-dashed ${
-                book.notes ? 'border-gray-200 bg-gray-50' : 'border-gray-300'
+              <div className={`p-4 rounded-xl border-2 border-dashed transition-colors ${
+                book.notes ? 'border-gray-200 bg-gray-50' : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50/50'
               }`}>
                 {book.notes ? (
-                  <p className="text-gray-700 whitespace-pre-wrap">{book.notes}</p>
+                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{book.notes}</p>
                 ) : (
-                  <p className="text-gray-400 italic">No notes yet. Tap the edit icon to add your thoughts about this book.</p>
+                  <div className="text-center py-4">
+                    <Bookmark className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-gray-500 font-medium">No notes yet</p>
+                    <p className="text-sm text-gray-400">Tap the edit icon to add your thoughts</p>
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Remove Book Section */}
-          <div className="pt-6 border-t border-gray-200">
+          {/* Remove Book Card */}
+          <div className="card p-6 border-red-100">
+            <h3 className="text-lg font-bold text-red-900 mb-2 flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
+                <Trash2 className="w-3 h-3 text-red-600" />
+              </div>
+              Danger Zone
+            </h3>
+            <p className="text-red-700 text-sm mb-4">
+              Removing this book will permanently delete it from your library. This action cannot be undone.
+            </p>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="btn btn-danger w-full"
@@ -436,27 +502,33 @@ export default function BookProfile() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Enhanced Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Remove Book?</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to remove "{book.title}" from your library? This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn btn-secondary flex-1"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteBook}
-                className="btn btn-danger flex-1"
-              >
-                Remove Book
-              </button>
+        <div className="modal-overlay">
+          <div className="modal-content p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Remove Book?</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to remove <span className="font-semibold">"{book.title}"</span> from your library? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="btn btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteBook}
+                  className="btn btn-danger flex-1"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remove Book
+                </button>
+              </div>
             </div>
           </div>
         </div>
