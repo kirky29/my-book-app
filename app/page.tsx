@@ -9,6 +9,27 @@ import BarcodeScanner from './components/BarcodeScanner'
 import StarRating from './components/StarRating'
 import QuickISBNSearch from './components/QuickISBNSearch'
 
+interface Book {
+  id: string
+  title: string
+  author: string
+  status: 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none'
+  readStatus: 'unread' | 'reading' | 'read'
+  rating?: number
+  series?: string
+  seriesNumber?: number
+  dateAdded: string
+  cover?: string
+  isbn?: string
+  description?: string
+  pageCount?: number
+  publishedDate?: string
+  publisher?: string
+  categories?: string[]
+  notes?: string
+  lentTo?: string
+}
+
 interface GoogleBook {
   id: string
   volumeInfo: {
@@ -32,7 +53,7 @@ interface GoogleBook {
 
 export default function BookTracker() {
   const router = useRouter()
-  const { books, addBook, toggleBookStatus, loading } = useBooks()
+  const { books, addBook, toggleBookStatus, loading, findDuplicates, getBooksByISBN, updateBook } = useBooks()
   const { user, logout } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -58,6 +79,8 @@ export default function BookTracker() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isFromGoogleBooks, setIsFromGoogleBooks] = useState(false)
+  const [duplicateBooks, setDuplicateBooks] = useState<Book[]>([])
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
 
   // Debounced Google Books search
   useEffect(() => {
@@ -91,8 +114,36 @@ export default function BookTracker() {
     }
   }
 
+  const checkForDuplicates = (title: string, author: string, isbn?: string) => {
+    let duplicates: Book[] = []
+    
+    // Check for ISBN duplicates first (most accurate)
+    if (isbn && isbn.trim()) {
+      const isbnDuplicates = getBooksByISBN(isbn.trim())
+      duplicates = [...duplicates, ...isbnDuplicates]
+    }
+    
+    // Check for title/author duplicates
+    const titleAuthorDuplicates = findDuplicates(title, author)
+    duplicates = [...duplicates, ...titleAuthorDuplicates]
+    
+    // Remove any actual duplicates from our duplicate array
+    return duplicates.filter((book, index, self) => 
+      index === self.findIndex(b => b.id === book.id)
+    )
+  }
+
   const handleAddBook = async () => {
     if (newBook.title.trim() && newBook.author.trim()) {
+      // Check for duplicates first
+      const duplicates = checkForDuplicates(newBook.title.trim(), newBook.author.trim(), newBook.isbn)
+      
+      if (duplicates.length > 0) {
+        setDuplicateBooks(duplicates)
+        setShowDuplicateWarning(true)
+        return
+      }
+
       try {
         // Create book data object with proper typing, excluding undefined values
         const bookData: any = {
@@ -137,6 +188,65 @@ export default function BookTracker() {
     }
   }
 
+  const handleAddDespiteDuplicates = async () => {
+    setShowDuplicateWarning(false)
+    setDuplicateBooks([])
+    
+    try {
+      // Create book data object with proper typing, excluding undefined values
+      const bookData: any = {
+        title: newBook.title.trim(),
+        author: newBook.author.trim(),
+        status: newBook.status,
+        readStatus: newBook.readStatus,
+      }
+      
+      // Only add optional fields if they have values
+      if (newBook.cover && newBook.cover.trim()) {
+        bookData.cover = newBook.cover.trim()
+      }
+      if (newBook.isbn && newBook.isbn.trim()) {
+        bookData.isbn = newBook.isbn.trim()
+      }
+      if (newBook.description && newBook.description.trim()) {
+        bookData.description = newBook.description.trim()
+      }
+      if (newBook.pageCount && typeof newBook.pageCount === 'number') {
+        bookData.pageCount = newBook.pageCount
+      }
+      if (newBook.publishedDate && newBook.publishedDate.trim()) {
+        bookData.publishedDate = newBook.publishedDate.trim()
+      }
+      if (newBook.publisher && newBook.publisher.trim()) {
+        bookData.publisher = newBook.publisher.trim()
+      }
+      if (newBook.categories && newBook.categories.length > 0) {
+        bookData.categories = newBook.categories
+      }
+      
+      console.log('Adding book with cleaned data (despite duplicates):', bookData)
+      await addBook(bookData)
+      resetForm()
+    } catch (error) {
+      console.error('Error adding book:', error)
+      // More specific error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Failed to add book: ${errorMessage}. Please try again.`)
+    }
+  }
+
+  const handleUpdateExistingBook = async (existingBookId: string, newStatus: Book['status']) => {
+    try {
+      await updateBook(existingBookId, { status: newStatus })
+      setShowDuplicateWarning(false)
+      setDuplicateBooks([])
+      resetForm()
+    } catch (error) {
+      console.error('Error updating book:', error)
+      alert('Failed to update existing book. Please try again.')
+    }
+  }
+
   const resetForm = () => {
     setNewBook({ 
       title: '', 
@@ -156,6 +266,8 @@ export default function BookTracker() {
     setGoogleSearchTerm('')
     setIsEditing(false)
     setIsFromGoogleBooks(false)
+    setShowDuplicateWarning(false)
+    setDuplicateBooks([])
   }
 
   const selectGoogleBook = (googleBook: GoogleBook) => {
@@ -175,6 +287,31 @@ export default function BookTracker() {
     const categories = Array.isArray(googleBook.volumeInfo.categories) ? googleBook.volumeInfo.categories : []
     
     console.log('Selected Google Book:', { title, author, cover, isbn, description, pageCount, publishedDate, publisher, categories })
+    
+    // Check for duplicates before setting the book data
+    const duplicates = checkForDuplicates(title, author, isbn.trim())
+    
+    if (duplicates.length > 0) {
+      setDuplicateBooks(duplicates)
+      setShowDuplicateWarning(true)
+      // Still set the book data so the user can see what they tried to add
+      setNewBook({
+        title,
+        author,
+        status: newBook.status,
+        readStatus: 'unread',
+        cover,
+        isbn: isbn.trim(),
+        description,
+        pageCount,
+        publishedDate,
+        publisher,
+        categories
+      })
+      setGoogleSearchResults([])
+      setGoogleSearchTerm('')
+      return
+    }
     
     setNewBook({
       title,
@@ -214,7 +351,7 @@ export default function BookTracker() {
         console.log('ISBN search response:', data)
         
         if (data.items && data.items.length > 0) {
-          // Auto-select the first result
+          // Auto-select the first result (this will now check for duplicates)
           console.log('Found book via ISBN:', data.items[0])
           selectGoogleBook(data.items[0])
         } else {
@@ -934,6 +1071,147 @@ export default function BookTracker() {
           onClose={() => setShowBarcodeScanner(false)}
           isActive={showBarcodeScanner}
         />
+      )}
+
+      {/* Duplicate Warning Modal */}
+      {showDuplicateWarning && (
+        <div className="modal-overlay fade-in">
+          <div className="modal-content max-w-lg">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-orange-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Book Already in Library</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowDuplicateWarning(false)
+                  setDuplicateBooks([])
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-700 mb-4">
+                  You already have this book in your library:
+                </p>
+                
+                {/* Show the book they're trying to add */}
+                <div className="card p-4 bg-blue-50 border-blue-200 mb-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">Trying to add:</h4>
+                  <div className="flex gap-3">
+                    {newBook.cover ? (
+                      <img 
+                        src={newBook.cover} 
+                        alt={newBook.title}
+                        className="w-12 h-18 object-cover rounded-lg shadow-sm border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-18 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
+                        <BookOpen className="w-4 h-4 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h5 className="font-medium text-gray-900">{newBook.title}</h5>
+                      <p className="text-sm text-gray-600">{newBook.author}</p>
+                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full mt-1">
+                        {newBook.status === 'physical' ? '📚 Physical' :
+                         newBook.status === 'digital' ? '📱 Digital' :
+                         newBook.status === 'both' ? '⭐ Both' :
+                         newBook.status === 'wishlist' ? '❤️ Wishlist' :
+                         newBook.status === 'lent' ? '👤 Lent' : '🤷‍♂️ Not Owned'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show existing duplicate books */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-gray-900">Already in your library:</h4>
+                  {duplicateBooks.map((book) => (
+                    <div key={book.id} className="card p-4 bg-gray-50 border-gray-200">
+                      <div className="flex gap-3 items-start">
+                        {book.cover ? (
+                          <img 
+                            src={book.cover} 
+                            alt={book.title}
+                            className="w-12 h-18 object-cover rounded-lg shadow-sm border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-12 h-18 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
+                            <BookOpen className="w-4 h-4 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900">{book.title}</h5>
+                          <p className="text-sm text-gray-600 mb-2">{book.author}</p>
+                          <div className="flex gap-2 flex-wrap">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              ['physical', 'digital', 'both'].includes(book.status)
+                                ? 'bg-green-100 text-green-800' 
+                                : book.status === 'lent'
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {book.status === 'physical' ? '📚 Physical' :
+                               book.status === 'digital' ? '📱 Digital' :
+                               book.status === 'both' ? '⭐ Both' :
+                               book.status === 'wishlist' ? '❤️ Wishlist' :
+                               book.status === 'lent' ? '👤 Lent' : '🤷‍♂️ Not Owned'}
+                            </span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                              {book.readStatus === 'read' ? '✅ Read' :
+                               book.readStatus === 'reading' ? '📚 Reading' : '📖 Unread'}
+                            </span>
+                          </div>
+                          {book.isbn && (
+                            <p className="text-xs text-gray-500 mt-1">ISBN: {book.isbn}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {newBook.status !== book.status && (
+                            <button
+                              onClick={() => handleUpdateExistingBook(book.id, newBook.status)}
+                              className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-lg hover:bg-blue-200 transition-colors"
+                              title={`Update to ${newBook.status}`}
+                            >
+                              Update Format
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setShowDuplicateWarning(false)
+                    setDuplicateBooks([])
+                  }}
+                  className="btn btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddDespiteDuplicates}
+                  className="btn btn-primary flex-1"
+                >
+                  Add Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
