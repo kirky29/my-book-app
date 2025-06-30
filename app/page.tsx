@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash } from 'lucide-react'
+import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash, X, Edit3 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
 import { useAuth } from './contexts/AuthContext'
@@ -58,19 +58,19 @@ export default function BookTracker() {
   const [googleSearchTerm, setGoogleSearchTerm] = useState('')
   const [googleSearchResults, setGoogleSearchResults] = useState<GoogleBook[]>([])
   const [isSearching, setIsSearching] = useState(false)
-  const [searchMode, setSearchMode] = useState<'manual' | 'search' | 'scan'>('search')
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
 
   // Debounced Google Books search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (googleSearchTerm && searchMode === 'search') {
+      if (googleSearchTerm && showAddForm) {
         searchGoogleBooks(googleSearchTerm)
       }
     }, 500)
 
     return () => clearTimeout(timeoutId)
-  }, [googleSearchTerm, searchMode])
+  }, [googleSearchTerm, showAddForm])
 
   const searchGoogleBooks = async (query: string) => {
     if (!query.trim()) {
@@ -113,30 +113,35 @@ export default function BookTracker() {
           categories: newBook.categories,
           notes: ''
         })
-        setNewBook({ 
-          title: '', 
-          author: '', 
-          status: 'physical', 
-          readStatus: 'unread',
-          rating: 0,
-          series: '',
-          seriesNumber: undefined,
-          cover: '', 
-          isbn: '',
-          description: '',
-          pageCount: undefined,
-          publishedDate: '',
-          publisher: '',
-          categories: []
-        })
-        setShowAddForm(false)
-        setGoogleSearchResults([])
-        setGoogleSearchTerm('')
+        resetForm()
       } catch (error) {
         console.error('Error adding book:', error)
         alert('Failed to add book. Please try again.')
       }
     }
+  }
+
+  const resetForm = () => {
+    setNewBook({ 
+      title: '', 
+      author: '', 
+      status: 'physical', 
+      readStatus: 'unread',
+      rating: 0,
+      series: '',
+      seriesNumber: undefined,
+      cover: '', 
+      isbn: '',
+      description: '',
+      pageCount: undefined,
+      publishedDate: '',
+      publisher: '',
+      categories: []
+    })
+    setShowAddForm(false)
+    setGoogleSearchResults([])
+    setGoogleSearchTerm('')
+    setIsEditing(false)
   }
 
   const selectGoogleBook = (googleBook: GoogleBook) => {
@@ -163,7 +168,7 @@ export default function BookTracker() {
     })
     setGoogleSearchResults([])
     setGoogleSearchTerm('')
-    setSearchMode('manual')
+    setIsEditing(true)
   }
 
   const handleBarcodeScanned = async (scannedCode: string) => {
@@ -186,13 +191,13 @@ export default function BookTracker() {
         } else {
           // If no results found, set the ISBN and let user search manually
           setNewBook(prev => ({ ...prev, isbn: cleanedCode }))
-          setSearchMode('manual')
+          setIsEditing(true)
           alert('Book not found in database. Please enter details manually.')
         }
       } catch (error) {
         console.error('Error searching for scanned book:', error)
         setNewBook(prev => ({ ...prev, isbn: cleanedCode }))
-        setSearchMode('manual')
+        setIsEditing(true)
         alert('Error searching for book. Please enter details manually.')
       }
     } else {
@@ -603,259 +608,309 @@ export default function BookTracker() {
       {/* Enhanced Add Book Modal */}
       {showAddForm && (
         <div className="modal-overlay slide-up">
-          <div className="modal-content">
+          <div className="modal-content max-w-2xl">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-2xl font-bold text-gray-900">Add New Book</h2>
               <button
-                onClick={() => setShowAddForm(false)}
+                onClick={resetForm}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Search Mode Selection */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">How would you like to add this book?</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    onClick={() => {
-                      setSearchMode('search')
-                      setGoogleSearchResults([])
-                      setShowBarcodeScanner(false)
-                    }}
-                    className={`btn flex flex-col items-center gap-2 py-4 h-auto ${searchMode === 'search' ? 'btn-primary' : 'btn-secondary'}`}
-                  >
-                    <Search className="w-6 h-6" />
-                    <span className="text-sm font-semibold">Search</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSearchMode('scan')
-                      setGoogleSearchResults([])
-                      setGoogleSearchTerm('')
-                      setShowBarcodeScanner(true)
-                    }}
-                    className={`btn flex flex-col items-center gap-2 py-4 h-auto ${searchMode === 'scan' ? 'btn-primary' : 'btn-secondary'}`}
-                  >
-                    <Scan className="w-6 h-6" />
-                    <span className="text-sm font-semibold">Scan</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSearchMode('manual')
-                      setGoogleSearchResults([])
-                      setGoogleSearchTerm('')
-                      setShowBarcodeScanner(false)
-                    }}
-                    className={`btn flex flex-col items-center gap-2 py-4 h-auto ${searchMode === 'manual' ? 'btn-primary' : 'btn-secondary'}`}
-                  >
-                    <BookOpen className="w-6 h-6" />
-                    <span className="text-sm font-semibold">Manual</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Google Books Search */}
-              {searchMode === 'search' && (
+            <div className="p-6">
+              {!isEditing ? (
                 <>
-                  <div className="search-container">
-                    <div className="relative">
-                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        placeholder="Search for books..."
-                        value={googleSearchTerm}
-                        onChange={(e) => setGoogleSearchTerm(e.target.value)}
-                        className="input pl-12 pr-4"
-                        autoFocus
-                      />
-                      {isSearching && (
-                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                          <div className="spinner h-5 w-5"></div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Search Results */}
-                  {googleSearchResults.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-gray-700">Search Results</h4>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                          {googleSearchResults.length} found
-                        </span>
+                  {/* Search Section */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Find Your Book</h3>
+                    
+                    {/* Search Bar */}
+                    <div className="search-container mb-4">
+                      <div className="relative">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                          type="text"
+                          placeholder="Search by title, author, or ISBN..."
+                          value={googleSearchTerm}
+                          onChange={(e) => setGoogleSearchTerm(e.target.value)}
+                          className="input pl-12 pr-4"
+                          autoFocus
+                        />
+                        {isSearching && (
+                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <div className="spinner h-5 w-5"></div>
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
-                        {googleSearchResults.map((googleBook) => (
-                          <div
-                            key={googleBook.id}
-                            onClick={() => selectGoogleBook(googleBook)}
-                            className="card cursor-pointer p-4 hover:shadow-lg transition-all duration-200"
-                          >
-                            <div className="flex gap-3">
-                              {googleBook.volumeInfo.imageLinks?.thumbnail ? (
-                                <img
-                                  src={googleBook.volumeInfo.imageLinks.thumbnail}
-                                  alt={googleBook.volumeInfo.title}
-                                  className="w-12 h-16 object-cover rounded-lg shadow-sm flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="w-12 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <BookOpen className="w-5 h-5 text-gray-400" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
-                                  {googleBook.volumeInfo.title}
-                                </h4>
-                                <p className="text-xs text-gray-600 mb-2">
-                                  {googleBook.volumeInfo.authors?.join(', ') || 'Unknown Author'}
-                                </p>
-                                {googleBook.volumeInfo.publishedDate && (
-                                  <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                    {new Date(googleBook.volumeInfo.publishedDate).getFullYear()}
-                                  </span>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="flex gap-3 mb-6">
+                      <button
+                        onClick={() => setShowBarcodeScanner(true)}
+                        className="btn btn-secondary flex items-center gap-2"
+                      >
+                        <Scan className="w-4 h-4" />
+                        Scan Barcode
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="btn btn-secondary flex items-center gap-2"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        Enter Manually
+                      </button>
+                    </div>
+
+                    {/* Search Results */}
+                    {googleSearchResults.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-700 mb-3">
+                          Found {googleSearchResults.length} book{googleSearchResults.length !== 1 ? 's' : ''}
+                        </h4>
+                        <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                          {googleSearchResults.map((googleBook) => (
+                            <div
+                              key={googleBook.id}
+                              onClick={() => selectGoogleBook(googleBook)}
+                              className="card cursor-pointer p-4 hover:shadow-lg transition-all duration-200 hover:border-blue-200"
+                            >
+                              <div className="flex gap-4">
+                                {googleBook.volumeInfo.imageLinks?.thumbnail ? (
+                                  <img
+                                    src={googleBook.volumeInfo.imageLinks.thumbnail}
+                                    alt={googleBook.volumeInfo.title}
+                                    className="w-16 h-24 object-cover rounded-lg shadow-sm flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <BookOpen className="w-6 h-6 text-gray-400" />
+                                  </div>
                                 )}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
+                                    {googleBook.volumeInfo.title}
+                                  </h4>
+                                  <p className="text-gray-600 mb-2">
+                                    {googleBook.volumeInfo.authors?.join(', ') || 'Unknown Author'}
+                                  </p>
+                                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                                    {googleBook.volumeInfo.publishedDate && (
+                                      <span>{new Date(googleBook.volumeInfo.publishedDate).getFullYear()}</span>
+                                    )}
+                                    {googleBook.volumeInfo.pageCount && (
+                                      <span>{googleBook.volumeInfo.pageCount} pages</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
                               </div>
-                              <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No Results */}
+                    {googleSearchTerm && !isSearching && googleSearchResults.length === 0 && (
+                      <div className="text-center py-8 border border-gray-200 rounded-xl bg-gray-50">
+                        <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                        <p className="text-gray-600 mb-2">No books found</p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Can't find your book? Try a different search or add it manually.
+                        </p>
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="btn btn-primary"
+                        >
+                          <Edit3 className="w-4 h-4 mr-2" />
+                          Add Manually
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Book Preview & Edit Form */}
+                  <div className="space-y-6">
+                    {/* Book Preview */}
+                    {(newBook.title || newBook.cover) && (
+                      <div className="card p-4 bg-blue-50 border-blue-200">
+                        <h3 className="font-semibold text-blue-900 mb-3">Book Preview</h3>
+                        <div className="flex gap-4">
+                          {/* Cover Preview */}
+                          <div className="flex-shrink-0">
+                            {newBook.cover ? (
+                              <img 
+                                src={newBook.cover} 
+                                alt={newBook.title}
+                                className="w-20 h-30 object-cover rounded-lg shadow-md border border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-20 h-30 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-md border border-gray-200">
+                                <BookOpen className="w-8 h-8 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Book Info Preview */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 text-lg mb-1">{newBook.title || 'Book Title'}</h4>
+                            <p className="text-gray-600 mb-2">{newBook.author || 'Author Name'}</p>
+                            {newBook.series && (
+                              <p className="text-blue-600 text-sm flex items-center gap-1 mb-2">
+                                <Hash className="w-3 h-3" />
+                                {newBook.series}{newBook.seriesNumber && ` #${newBook.seriesNumber}`}
+                              </p>
+                            )}
+                            <div className="flex gap-2">
+                              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                {newBook.status === 'physical' ? '📚 Physical' :
+                                 newBook.status === 'digital' ? '📱 Digital' :
+                                 newBook.status === 'both' ? '⭐ Both' :
+                                 newBook.status === 'wishlist' ? '❤️ Wishlist' :
+                                 newBook.status === 'lent' ? '👤 Lent' : '🤷‍♂️ Not Owned'}
+                              </span>
+                              <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                                {newBook.readStatus === 'read' ? '✅ Read' :
+                                 newBook.readStatus === 'reading' ? '📚 Reading' : '📖 Unread'}
+                              </span>
                             </div>
                           </div>
-                        ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Edit Form */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900">Book Details</h3>
+                        <button
+                          onClick={() => setIsEditing(false)}
+                          className="text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          ← Back to Search
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Book Title *</label>
+                          <input
+                            type="text"
+                            placeholder="Enter book title"
+                            value={newBook.title}
+                            onChange={(e) => setNewBook(prev => ({ ...prev, title: e.target.value }))}
+                            className="input"
+                          />
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Author *</label>
+                          <input
+                            type="text"
+                            placeholder="Enter author name"
+                            value={newBook.author}
+                            onChange={(e) => setNewBook(prev => ({ ...prev, author: e.target.value }))}
+                            className="input"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Ownership</label>
+                          <select
+                            value={newBook.status}
+                            onChange={(e) => setNewBook(prev => ({ 
+                              ...prev, 
+                              status: e.target.value as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none'
+                            }))}
+                            className="input"
+                          >
+                            <option value="physical">📚 Physical Copy</option>
+                            <option value="digital">📱 Digital Copy</option>
+                            <option value="both">⭐ Both Formats</option>
+                            <option value="wishlist">❤️ Want to Read</option>
+                            <option value="lent">👤 Lent Out</option>
+                            <option value="none">🤷‍♂️ Not Owned</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Reading Status</label>
+                          <select
+                            value={newBook.readStatus}
+                            onChange={(e) => setNewBook(prev => ({ 
+                              ...prev, 
+                              readStatus: e.target.value as 'unread' | 'reading' | 'read'
+                            }))}
+                            className="input"
+                          >
+                            <option value="unread">📖 Not Started</option>
+                            <option value="reading">📚 Currently Reading</option>
+                            <option value="read">✅ Finished</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Series (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Harry Potter"
+                            value={newBook.series}
+                            onChange={(e) => setNewBook(prev => ({ ...prev, series: e.target.value }))}
+                            className="input"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Book # (Optional)</label>
+                          <input
+                            type="number"
+                            placeholder="1"
+                            min="1"
+                            value={newBook.seriesNumber || ''}
+                            onChange={(e) => setNewBook(prev => ({ 
+                              ...prev, 
+                              seriesNumber: e.target.value ? parseInt(e.target.value) : undefined 
+                            }))}
+                            className="input"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (Optional)</label>
+                          <StarRating
+                            rating={newBook.rating}
+                            onRatingChange={(rating) => setNewBook(prev => ({ ...prev, rating }))}
+                            size="lg"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-6 border-t">
+                        <button
+                          onClick={resetForm}
+                          className="btn btn-secondary flex-1"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleAddBook}
+                          disabled={!newBook.title.trim() || !newBook.author.trim()}
+                          className="btn btn-primary flex-1"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add to Library
+                        </button>
                       </div>
                     </div>
-                  )}
-
-                  {googleSearchTerm && !isSearching && googleSearchResults.length === 0 && (
-                    <div className="text-center py-8 border border-gray-200 rounded-xl bg-gray-50">
-                      <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                      <p className="text-gray-600 mb-2">No books found</p>
-                      <p className="text-sm text-gray-500">Try a different search term or add manually</p>
-                    </div>
-                  )}
+                  </div>
                 </>
-              )}
-
-              {/* Manual Entry Form */}
-              {searchMode === 'manual' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Book Title *</label>
-                    <input
-                      type="text"
-                      placeholder="Enter book title"
-                      value={newBook.title}
-                      onChange={(e) => setNewBook(prev => ({ ...prev, title: e.target.value }))}
-                      className="input"
-                      autoFocus
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Author *</label>
-                    <input
-                      type="text"
-                      placeholder="Enter author name"
-                      value={newBook.author}
-                      onChange={(e) => setNewBook(prev => ({ ...prev, author: e.target.value }))}
-                      className="input"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                    <select
-                      value={newBook.status}
-                      onChange={(e) => setNewBook(prev => ({ 
-                        ...prev, 
-                        status: e.target.value as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none'
-                      }))}
-                      className="input"
-                    >
-                      <option value="physical">📚 Physical Copy</option>
-                      <option value="digital">📱 Digital Copy</option>
-                      <option value="both">⭐ Both Formats</option>
-                      <option value="wishlist">❤️ Want to Read</option>
-                      <option value="lent"> Lent Out</option>
-                      <option value="none">🤷‍♂️ Not Owned</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Reading Status</label>
-                    <select
-                      value={newBook.readStatus}
-                      onChange={(e) => setNewBook(prev => ({ 
-                        ...prev, 
-                        readStatus: e.target.value as 'unread' | 'reading' | 'read'
-                      }))}
-                      className="input"
-                    >
-                      <option value="unread">📖 Not Started</option>
-                      <option value="reading">📚 Currently Reading</option>
-                      <option value="read">✅ Finished</option>
-                    </select>
-                  </div>
-
-                  {/* Series Information */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Series Name (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Harry Potter"
-                        value={newBook.series}
-                        onChange={(e) => setNewBook(prev => ({ ...prev, series: e.target.value }))}
-                        className="input"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Book #</label>
-                      <input
-                        type="number"
-                        placeholder="1"
-                        min="1"
-                        value={newBook.seriesNumber || ''}
-                        onChange={(e) => setNewBook(prev => ({ 
-                          ...prev, 
-                          seriesNumber: e.target.value ? parseInt(e.target.value) : undefined 
-                        }))}
-                        className="input"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (Optional)</label>
-                    <div className="py-2">
-                      <StarRating
-                        rating={newBook.rating}
-                        onRatingChange={(rating) => setNewBook(prev => ({ ...prev, rating }))}
-                        size="lg"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={() => setShowAddForm(false)}
-                      className="btn btn-secondary flex-1"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleAddBook}
-                      disabled={!newBook.title.trim() || !newBook.author.trim()}
-                      className="btn btn-primary flex-1"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Book
-                    </button>
-                  </div>
-                </div>
               )}
             </div>
           </div>
@@ -869,7 +924,6 @@ export default function BookTracker() {
             selectGoogleBook(googleBook)
             setShowISBNSearch(false)
             setShowAddForm(true)
-            setSearchMode('manual')
           }}
           onClose={() => setShowISBNSearch(false)}
         />
