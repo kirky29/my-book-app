@@ -458,27 +458,100 @@ export default function BookTracker() {
             <p className="text-white/80 text-sm">Your personal book collection</p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <Library className="w-4 h-4 mx-auto mb-1 text-white/90" />
-              <p className="text-lg font-bold text-white">{ownedCount}</p>
-              <p className="text-xs text-white/80">Owned</p>
+          {/* Interactive Stats & Actions */}
+          <div className="space-y-4">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-4 gap-2">
+              <button
+                onClick={() => {
+                  setFilter('owned')
+                  setSubFilter('all')
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center hover:bg-white/20 transition-all duration-200 active:scale-95"
+              >
+                <Library className="w-4 h-4 mx-auto mb-1 text-white/90" />
+                <p className="text-lg font-bold text-white">{ownedCount}</p>
+                <p className="text-xs text-white/80">Owned</p>
+              </button>
+              <button
+                onClick={() => {
+                  setFilter('wishlist')
+                  setSubFilter('all')
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center hover:bg-white/20 transition-all duration-200 active:scale-95"
+              >
+                <Heart className="w-4 h-4 mx-auto mb-1 text-white/90" />
+                <p className="text-lg font-bold text-white">{wishlistCount}</p>
+                <p className="text-xs text-white/80">Wishlist</p>
+              </button>
+              <button
+                onClick={() => {
+                  setFilter('read')
+                  setSubFilter('all')
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center hover:bg-white/20 transition-all duration-200 active:scale-95"
+              >
+                <BookCheck className="w-4 h-4 mx-auto mb-1 text-white/90" />
+                <p className="text-lg font-bold text-white">{readCount}</p>
+                <p className="text-xs text-white/80">Read</p>
+              </button>
+              <button
+                onClick={() => {
+                  setFilter('lent')
+                  setSubFilter('all')
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center hover:bg-white/20 transition-all duration-200 active:scale-95"
+              >
+                <UserCheck className="w-4 h-4 mx-auto mb-1 text-white/90" />
+                <p className="text-lg font-bold text-white">{lentCount}</p>
+                <p className="text-xs text-white/80">Lent</p>
+              </button>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <Heart className="w-4 h-4 mx-auto mb-1 text-white/90" />
-              <p className="text-lg font-bold text-white">{wishlistCount}</p>
-              <p className="text-xs text-white/80">Wishlist</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <BookCheck className="w-4 h-4 mx-auto mb-1 text-white/90" />
-              <p className="text-lg font-bold text-white">{readCount}</p>
-              <p className="text-xs text-white/80">Read</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <UserCheck className="w-4 h-4 mx-auto mb-1 text-white/90" />
-              <p className="text-lg font-bold text-white">{lentCount}</p>
-              <p className="text-xs text-white/80">Lent</p>
+
+            {/* Quick Actions */}
+            <div className="space-y-3">
+              {/* Primary Action - Add Book */}
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="w-full bg-white/15 backdrop-blur-sm rounded-xl p-4 hover:bg-white/25 transition-all duration-200 active:scale-95 flex items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <Plus className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-white font-semibold">Add New Book</p>
+                  <p className="text-white/80 text-sm">Search database or enter manually</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white/60" />
+              </button>
+
+              {/* Secondary Actions */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setShowBarcodeScanner(true)}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/20 transition-all duration-200 active:scale-95 flex items-center gap-2"
+                >
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <Scan className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-medium text-sm">Scan</p>
+                    <p className="text-white/80 text-xs">Barcode</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setShowISBNSearch(true)}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/20 transition-all duration-200 active:scale-95 flex items-center gap-2"
+                >
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <Hash className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-medium text-sm">ISBN</p>
+                    <p className="text-white/80 text-xs">Lookup</p>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -625,7 +698,7 @@ export default function BookTracker() {
             )}
           </div>
         ) : (
-          <div className="space-y-4 pb-20">
+          <div className="space-y-4 pb-6">
             {filteredBooks.map(book => (
               <div 
                 key={book.id} 
@@ -765,25 +838,7 @@ export default function BookTracker() {
         )}
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="fab-bottom-right flex flex-col gap-3">
-        {/* Quick ISBN Search Button */}
-        <button
-          onClick={() => setShowISBNSearch(true)}
-          className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
-          title="Quick ISBN Check"
-        >
-          <Hash className="w-5 h-5" />
-        </button>
-        
-        {/* Add Book Button */}
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center justify-center active:scale-95"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      </div>
+
 
       {/* Enhanced Add Book Modal */}
       {showAddForm && (
