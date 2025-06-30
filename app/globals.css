@@ -78,6 +78,10 @@
   .status-wishlist {
     @apply bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border border-amber-200;
   }
+
+  .status-lent {
+    @apply bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200;
+  }
   
   /* Header Styles */
   .header-gradient {

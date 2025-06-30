@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag, Star, Heart, Library, BookCheck, Share, Bookmark } from 'lucide-react'
+import { ArrowLeft, Edit3, Save, X, Trash2, Eye, Check, BookOpen, Calendar, User, Building2, Tag, Star, Heart, Library, BookCheck, Share, Bookmark, UserCheck } from 'lucide-react'
 import { useBooks } from '../../contexts/BookContext'
 
 export default function BookProfile() {
@@ -14,6 +14,8 @@ export default function BookProfile() {
   const [notes, setNotes] = useState(book?.notes || '')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showLentPrompt, setShowLentPrompt] = useState(false)
+  const [lentToName, setLentToName] = useState('')
 
   useEffect(() => {
     const foundBook = getBook(params.id as string)
@@ -97,15 +99,53 @@ export default function BookProfile() {
     }
   }
 
-  const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'read' | 'wishlist') => {
+  const handleStatusChange = async (newStatus: 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent') => {
     try {
-      await updateBook(book.id, { status: newStatus })
+      if (newStatus === 'lent') {
+        // Show prompt for person's name
+        setShowLentPrompt(true)
+        setShowStatusDropdown(false)
+        setLentToName('')
+        return
+      }
+
+      // Clear lentTo when changing away from lent status
+      const updateData: any = { status: newStatus }
+      if (book.status === 'lent') {
+        updateData.lentTo = null
+      }
+
+      await updateBook(book.id, updateData)
       // Update local state to reflect the new status
       const updatedBook = getBook(book.id)
       if (updatedBook) {
         setBook(updatedBook)
       }
       setShowStatusDropdown(false)
+    } catch (error) {
+      console.error('Error updating book status:', error)
+      alert('Failed to update book status. Please try again.')
+    }
+  }
+
+  const handleLentSubmit = async () => {
+    if (!lentToName.trim()) {
+      alert('Please enter the name of the person you lent the book to.')
+      return
+    }
+
+    try {
+      await updateBook(book.id, { 
+        status: 'lent',
+        lentTo: lentToName.trim()
+      })
+      // Update local state
+      const updatedBook = getBook(book.id)
+      if (updatedBook) {
+        setBook(updatedBook)
+      }
+      setShowLentPrompt(false)
+      setLentToName('')
     } catch (error) {
       console.error('Error updating book status:', error)
       alert('Failed to update book status. Please try again.')
@@ -169,6 +209,8 @@ export default function BookProfile() {
                     ? 'status-owned' 
                     : book.status === 'read'
                     ? 'status-read'
+                    : book.status === 'lent'
+                    ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200'
                     : 'status-wishlist'
                 }`}>
                   {book.status === 'physical' && (
@@ -193,6 +235,12 @@ export default function BookProfile() {
                     <>
                       <BookCheck className="w-4 h-4" />
                       Read It
+                    </>
+                  )}
+                  {book.status === 'lent' && (
+                    <>
+                      <UserCheck className="w-4 h-4" />
+                      Lent to {book.lentTo || 'Someone'}
                     </>
                   )}
                   {book.status === 'wishlist' && (
@@ -286,6 +334,22 @@ export default function BookProfile() {
                     <div className="text-sm opacity-70">Borrowed, library, or finished</div>
                   </div>
                   {book.status === 'read' && <Check className="w-5 h-5 text-indigo-600" />}
+                </button>
+
+                <button
+                  onClick={() => handleStatusChange('lent')}
+                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
+                    book.status === 'lent' ? 'bg-orange-50 text-orange-800' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <UserCheck className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold">Lent Out</div>
+                    <div className="text-sm opacity-70">Loaned to someone</div>
+                  </div>
+                  {book.status === 'lent' && <Check className="w-5 h-5 text-orange-600" />}
                 </button>
                 
                 <button
@@ -406,6 +470,18 @@ export default function BookProfile() {
                 </div>
               )}
 
+              {book.status === 'lent' && book.lentTo && (
+                <div className="flex items-center gap-4 pt-2 border-t border-orange-100 bg-orange-50 rounded-lg p-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <UserCheck className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-orange-700 font-medium">Lent to</p>
+                    <p className="text-orange-900 font-semibold">{book.lentTo}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
                 <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Calendar className="w-5 h-5 text-gray-600" />
@@ -501,6 +577,63 @@ export default function BookProfile() {
           </div>
         </div>
       </div>
+
+      {/* Lent Out Prompt Modal */}
+      {showLentPrompt && (
+        <div className="modal-overlay">
+          <div className="modal-content p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserCheck className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Lent Out Book</h3>
+              <p className="text-gray-600">
+                Who did you lend <span className="font-semibold">"{book.title}"</span> to?
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Person's Name
+                </label>
+                <input
+                  type="text"
+                  value={lentToName}
+                  onChange={(e) => setLentToName(e.target.value)}
+                  placeholder="Enter the person's name"
+                  className="input"
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleLentSubmit()
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowLentPrompt(false)
+                    setLentToName('')
+                  }}
+                  className="btn btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLentSubmit}
+                  className="btn btn-primary flex-1"
+                >
+                  <UserCheck className="w-4 h-4 mr-2" />
+                  Mark as Lent
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Delete Confirmation Modal */}
       {showDeleteConfirm && (

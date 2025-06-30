@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star } from 'lucide-react'
+import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
 import { useAuth } from './contexts/AuthContext'
@@ -37,7 +37,7 @@ export default function BookTracker() {
   const [newBook, setNewBook] = useState({ 
     title: '', 
     author: '', 
-    status: 'physical' as 'physical' | 'digital' | 'both' | 'read' | 'wishlist', 
+    status: 'physical' as 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent', 
     cover: '', 
     isbn: '',
     description: '',
@@ -46,7 +46,7 @@ export default function BookTracker() {
     publisher: '',
     categories: [] as string[]
   })
-  const [filter, setFilter] = useState<'all' | 'owned' | 'wishlist' | 'read'>('all')
+  const [filter, setFilter] = useState<'all' | 'owned' | 'wishlist' | 'read' | 'lent'>('all')
   const [googleSearchTerm, setGoogleSearchTerm] = useState('')
   const [googleSearchResults, setGoogleSearchResults] = useState<GoogleBook[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -208,6 +208,7 @@ export default function BookTracker() {
   const ownedCount = books.filter(book => ['physical', 'digital', 'both'].includes(book.status)).length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
   const readCount = books.filter(book => book.status === 'read').length
+  const lentCount = books.filter(book => book.status === 'lent').length
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -243,21 +244,26 @@ export default function BookTracker() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <Library className="w-5 h-5 mx-auto mb-1 text-white/90" />
-              <p className="text-xl font-bold text-white">{ownedCount}</p>
+              <Library className="w-4 h-4 mx-auto mb-1 text-white/90" />
+              <p className="text-lg font-bold text-white">{ownedCount}</p>
               <p className="text-xs text-white/80">Owned</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <Heart className="w-5 h-5 mx-auto mb-1 text-white/90" />
-              <p className="text-xl font-bold text-white">{wishlistCount}</p>
+              <Heart className="w-4 h-4 mx-auto mb-1 text-white/90" />
+              <p className="text-lg font-bold text-white">{wishlistCount}</p>
               <p className="text-xs text-white/80">Wishlist</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-              <BookCheck className="w-5 h-5 mx-auto mb-1 text-white/90" />
-              <p className="text-xl font-bold text-white">{readCount}</p>
+              <BookCheck className="w-4 h-4 mx-auto mb-1 text-white/90" />
+              <p className="text-lg font-bold text-white">{readCount}</p>
               <p className="text-xs text-white/80">Read</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+              <UserCheck className="w-4 h-4 mx-auto mb-1 text-white/90" />
+              <p className="text-lg font-bold text-white">{lentCount}</p>
+              <p className="text-xs text-white/80">Lent</p>
             </div>
           </div>
         </div>
@@ -307,6 +313,13 @@ export default function BookTracker() {
           >
             <BookCheck className="w-4 h-4 mr-1" />
             Read ({readCount})
+          </button>
+          <button
+            onClick={() => setFilter('lent')}
+            className={`filter-pill whitespace-nowrap ${filter === 'lent' ? 'filter-pill-active' : 'filter-pill-inactive'}`}
+          >
+            <UserCheck className="w-4 h-4 mr-1" />
+            Lent ({lentCount})
           </button>
         </div>
       </div>
@@ -394,6 +407,8 @@ export default function BookTracker() {
                           ? 'status-owned' 
                           : book.status === 'read'
                           ? 'status-read'
+                          : book.status === 'lent'
+                          ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200'
                           : 'status-wishlist'
                       }`}>
                         {book.status === 'physical' && (
@@ -418,6 +433,12 @@ export default function BookTracker() {
                           <>
                             <BookCheck className="w-4 h-4" />
                             Read
+                          </>
+                        )}
+                        {book.status === 'lent' && (
+                          <>
+                            <UserCheck className="w-4 h-4" />
+                            Lent to {book.lentTo || 'Someone'}
                           </>
                         )}
                         {book.status === 'wishlist' && (
@@ -620,7 +641,7 @@ export default function BookTracker() {
                       value={newBook.status}
                       onChange={(e) => setNewBook(prev => ({ 
                         ...prev, 
-                        status: e.target.value as 'physical' | 'digital' | 'both' | 'read' | 'wishlist'
+                        status: e.target.value as 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent'
                       }))}
                       className="input"
                     >
@@ -629,6 +650,7 @@ export default function BookTracker() {
                       <option value="both">⭐ Both Formats</option>
                       <option value="read">✅ Read It</option>
                       <option value="wishlist">❤️ Want to Read</option>
+                      <option value="lent">👤 Lent Out</option>
                     </select>
                   </div>
 

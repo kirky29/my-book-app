@@ -19,7 +19,7 @@ interface Book {
   id: string
   title: string
   author: string
-  status: 'physical' | 'digital' | 'both' | 'read' | 'wishlist'
+  status: 'physical' | 'digital' | 'both' | 'read' | 'wishlist' | 'lent'
   dateAdded: string
   cover?: string
   isbn?: string
@@ -29,6 +29,7 @@ interface Book {
   publisher?: string
   categories?: string[]
   notes?: string
+  lentTo?: string // Person who borrowed the book
 }
 
 interface BookContextType {
@@ -84,7 +85,8 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           publishedDate: data.publishedDate,
           publisher: data.publisher,
           categories: data.categories,
-          notes: data.notes || ''
+          notes: data.notes || '',
+          lentTo: data.lentTo
         })
       })
       setBooks(booksData)
@@ -150,7 +152,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   const toggleBookStatus = async (id: string) => {
     const book = getBook(id)
     if (book) {
-      // Cycle through ownership statuses: wishlist -> physical -> digital -> both -> read -> wishlist
+      // Cycle through ownership statuses: wishlist -> physical -> digital -> both -> read -> lent -> wishlist
       let newStatus: Book['status']
       switch (book.status) {
         case 'wishlist':
@@ -166,6 +168,9 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           newStatus = 'read'
           break
         case 'read':
+          newStatus = 'lent'
+          break
+        case 'lent':
           newStatus = 'wishlist'
           break
         default:
