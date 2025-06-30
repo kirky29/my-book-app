@@ -219,6 +219,11 @@
     z-index: 50;
   }
   
+  /* Enhanced shadow for FAB */
+  .shadow-3xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -6px rgba(0, 0, 0, 0.1);
+  }
+  
   /* Prevent pull-to-refresh on iOS PWA */
   html, body {
     overscroll-behavior-y: none;

@@ -82,6 +82,7 @@ export default function BookTracker() {
   const [duplicateBooks, setDuplicateBooks] = useState<Book[]>([])
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [showQuickActions, setShowQuickActions] = useState(false)
 
   // Handle URL parameters for PWA shortcuts
   useEffect(() => {
@@ -486,51 +487,7 @@ export default function BookTracker() {
               </button>
             </div>
 
-            {/* Quick Actions */}
-            <div className="space-y-3">
-              {/* Primary Action - Add Book */}
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="w-full bg-white/15 backdrop-blur-sm rounded-xl p-4 hover:bg-white/25 transition-all duration-200 active:scale-95 flex items-center gap-3"
-              >
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="text-white font-semibold">Add New Book</p>
-                  <p className="text-white/80 text-sm">Search database or enter manually</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-white/60" />
-              </button>
 
-              {/* Secondary Actions */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setShowBarcodeScanner(true)}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/20 transition-all duration-200 active:scale-95 flex items-center gap-2"
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <Scan className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-white font-medium text-sm">Scan</p>
-                    <p className="text-white/80 text-xs">Barcode</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setShowISBNSearch(true)}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/20 transition-all duration-200 active:scale-95 flex items-center gap-2"
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <Hash className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-white font-medium text-sm">ISBN</p>
-                    <p className="text-white/80 text-xs">Lookup</p>
-                  </div>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </header>
@@ -708,7 +665,7 @@ export default function BookTracker() {
           </div>
         ) : viewMode === 'list' ? (
           /* List View - Improved */
-          <div className="space-y-3 pb-6">
+          <div className="space-y-3 pb-24">
             {filteredBooks.map(book => (
               <div 
                 key={book.id} 
@@ -847,7 +804,7 @@ export default function BookTracker() {
           </div>
         ) : (
           /* Grid View - New */
-          <div className="grid grid-cols-2 gap-4 pb-6">
+          <div className="grid grid-cols-2 gap-4 pb-24">
             {filteredBooks.map(book => (
               <div 
                 key={book.id} 
@@ -984,7 +941,96 @@ export default function BookTracker() {
         )}
       </div>
 
+      {/* Floating Action Button */}
+      <div className="fab-bottom-right">
+        <button
+          onClick={() => setShowQuickActions(true)}
+          className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center justify-center active:scale-95 hover:from-blue-700 hover:to-blue-800"
+          title="Add Book"
+        >
+          <Plus className="w-8 h-8" />
+        </button>
+      </div>
 
+      {/* Quick Actions Menu */}
+      {showQuickActions && (
+        <div className="modal-overlay fade-in safe-area-bottom">
+          <div className="modal-content max-w-sm">
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Add New Book</h3>
+                <p className="text-gray-600">Choose how you'd like to add a book</p>
+              </div>
+
+              <div className="space-y-3">
+                {/* Search & Add */}
+                <button
+                  onClick={() => {
+                    setShowQuickActions(false)
+                    setShowAddForm(true)
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-4 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 active:scale-95 flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-semibold">Search & Add</p>
+                    <p className="text-white/80 text-sm">Search database or enter manually</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-white/60" />
+                </button>
+
+                {/* Scan Barcode */}
+                <button
+                  onClick={() => {
+                    setShowQuickActions(false)
+                    setShowBarcodeScanner(true)
+                  }}
+                  className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl p-4 hover:bg-gray-50 transition-all duration-200 active:scale-95 flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <Scan className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-semibold">Scan Barcode</p>
+                    <p className="text-gray-600 text-sm">Use camera to scan ISBN</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </button>
+
+                {/* ISBN Lookup */}
+                <button
+                  onClick={() => {
+                    setShowQuickActions(false)
+                    setShowISBNSearch(true)
+                  }}
+                  className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl p-4 hover:bg-gray-50 transition-all duration-200 active:scale-95 flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Hash className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-semibold">ISBN Lookup</p>
+                    <p className="text-gray-600 text-sm">Enter ISBN number directly</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowQuickActions(false)}
+                className="w-full mt-6 py-3 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Add Book Modal */}
       {showAddForm && (
