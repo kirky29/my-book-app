@@ -42,9 +42,6 @@ export default function BookTracker() {
     author: '', 
     status: 'physical' as 'physical' | 'digital' | 'both' | 'wishlist' | 'lent' | 'none', 
     readStatus: 'unread' as 'unread' | 'reading' | 'read',
-    rating: 0,
-    series: '',
-    seriesNumber: undefined as number | undefined,
     cover: '', 
     isbn: '',
     description: '',
@@ -60,6 +57,7 @@ export default function BookTracker() {
   const [isSearching, setIsSearching] = useState(false)
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isFromGoogleBooks, setIsFromGoogleBooks] = useState(false)
 
   // Debounced Google Books search
   useEffect(() => {
@@ -96,23 +94,22 @@ export default function BookTracker() {
   const handleAddBook = async () => {
     if (newBook.title.trim() && newBook.author.trim()) {
       try {
-        await addBook({
+        // Simplified book data - only include essential fields
+        const bookData = {
           title: newBook.title.trim(),
           author: newBook.author.trim(),
           status: newBook.status,
           readStatus: newBook.readStatus,
-          rating: newBook.rating > 0 ? newBook.rating : undefined,
-          series: newBook.series.trim() || undefined,
-          seriesNumber: newBook.seriesNumber || undefined,
-          cover: newBook.cover,
-          isbn: newBook.isbn,
-          description: newBook.description,
-          pageCount: newBook.pageCount,
-          publishedDate: newBook.publishedDate,
-          publisher: newBook.publisher,
-          categories: newBook.categories,
-          notes: ''
-        })
+          cover: newBook.cover || undefined,
+          isbn: newBook.isbn || undefined,
+          description: newBook.description || undefined,
+          pageCount: newBook.pageCount || undefined,
+          publishedDate: newBook.publishedDate || undefined,
+          publisher: newBook.publisher || undefined,
+          categories: newBook.categories?.length > 0 ? newBook.categories : undefined
+        }
+        
+        await addBook(bookData)
         resetForm()
       } catch (error) {
         console.error('Error adding book:', error)
@@ -127,9 +124,6 @@ export default function BookTracker() {
       author: '', 
       status: 'physical', 
       readStatus: 'unread',
-      rating: 0,
-      series: '',
-      seriesNumber: undefined,
       cover: '', 
       isbn: '',
       description: '',
@@ -142,6 +136,7 @@ export default function BookTracker() {
     setGoogleSearchResults([])
     setGoogleSearchTerm('')
     setIsEditing(false)
+    setIsFromGoogleBooks(false)
   }
 
   const selectGoogleBook = (googleBook: GoogleBook) => {
@@ -154,21 +149,19 @@ export default function BookTracker() {
       title: googleBook.volumeInfo.title,
       author: authors.join(', '),
       status: newBook.status,
-      rating: 0,
-      series: '',
-      seriesNumber: undefined,
+      readStatus: 'unread',
       cover: googleBook.volumeInfo.imageLinks?.thumbnail || '',
       isbn: isbn,
       description: googleBook.volumeInfo.description || '',
       pageCount: googleBook.volumeInfo.pageCount,
       publishedDate: googleBook.volumeInfo.publishedDate || '',
       publisher: googleBook.volumeInfo.publisher || '',
-      categories: googleBook.volumeInfo.categories || [],
-      readStatus: 'unread'
+      categories: googleBook.volumeInfo.categories || []
     })
     setGoogleSearchResults([])
     setGoogleSearchTerm('')
     setIsEditing(true)
+    setIsFromGoogleBooks(true)
   }
 
   const handleBarcodeScanned = async (scannedCode: string) => {
@@ -192,12 +185,14 @@ export default function BookTracker() {
           // If no results found, set the ISBN and let user search manually
           setNewBook(prev => ({ ...prev, isbn: cleanedCode }))
           setIsEditing(true)
+          setIsFromGoogleBooks(false)
           alert('Book not found in database. Please enter details manually.')
         }
       } catch (error) {
         console.error('Error searching for scanned book:', error)
         setNewBook(prev => ({ ...prev, isbn: cleanedCode }))
         setIsEditing(true)
+        setIsFromGoogleBooks(false)
         alert('Error searching for book. Please enter details manually.')
       }
     } else {
@@ -761,12 +756,6 @@ export default function BookTracker() {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 text-lg mb-1">{newBook.title || 'Book Title'}</h4>
                             <p className="text-gray-600 mb-2">{newBook.author || 'Author Name'}</p>
-                            {newBook.series && (
-                              <p className="text-blue-600 text-sm flex items-center gap-1 mb-2">
-                                <Hash className="w-3 h-3" />
-                                {newBook.series}{newBook.seriesNumber && ` #${newBook.seriesNumber}`}
-                              </p>
-                            )}
                             <div className="flex gap-2">
                               <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                                 {newBook.status === 'physical' ? '📚 Physical' :
@@ -805,8 +794,12 @@ export default function BookTracker() {
                             placeholder="Enter book title"
                             value={newBook.title}
                             onChange={(e) => setNewBook(prev => ({ ...prev, title: e.target.value }))}
-                            className="input"
+                            disabled={isFromGoogleBooks}
+                            className={`input ${isFromGoogleBooks ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
                           />
+                          {isFromGoogleBooks && (
+                            <p className="text-xs text-gray-500 mt-1">Title from Google Books (cannot be edited)</p>
+                          )}
                         </div>
                         
                         <div className="md:col-span-2">
@@ -816,8 +809,12 @@ export default function BookTracker() {
                             placeholder="Enter author name"
                             value={newBook.author}
                             onChange={(e) => setNewBook(prev => ({ ...prev, author: e.target.value }))}
-                            className="input"
+                            disabled={isFromGoogleBooks}
+                            className={`input ${isFromGoogleBooks ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
                           />
+                          {isFromGoogleBooks && (
+                            <p className="text-xs text-gray-500 mt-1">Author from Google Books (cannot be edited)</p>
+                          )}
                         </div>
 
                         <div>
@@ -853,41 +850,6 @@ export default function BookTracker() {
                             <option value="reading">📚 Currently Reading</option>
                             <option value="read">✅ Finished</option>
                           </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Series (Optional)</label>
-                          <input
-                            type="text"
-                            placeholder="e.g., Harry Potter"
-                            value={newBook.series}
-                            onChange={(e) => setNewBook(prev => ({ ...prev, series: e.target.value }))}
-                            className="input"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Book # (Optional)</label>
-                          <input
-                            type="number"
-                            placeholder="1"
-                            min="1"
-                            value={newBook.seriesNumber || ''}
-                            onChange={(e) => setNewBook(prev => ({ 
-                              ...prev, 
-                              seriesNumber: e.target.value ? parseInt(e.target.value) : undefined 
-                            }))}
-                            className="input"
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Rating (Optional)</label>
-                          <StarRating
-                            rating={newBook.rating}
-                            onRatingChange={(rating) => setNewBook(prev => ({ ...prev, rating }))}
-                            size="lg"
-                          />
                         </div>
                       </div>
 
