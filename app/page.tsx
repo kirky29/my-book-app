@@ -47,6 +47,7 @@ export default function BookTracker() {
     categories: [] as string[]
   })
   const [filter, setFilter] = useState<'all' | 'owned' | 'wishlist' | 'read' | 'lent'>('all')
+  const [subFilter, setSubFilter] = useState<'all' | 'physical' | 'digital'>('all')
   const [googleSearchTerm, setGoogleSearchTerm] = useState('')
   const [googleSearchResults, setGoogleSearchResults] = useState<GoogleBook[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -188,7 +189,14 @@ export default function BookTracker() {
     if (filter === 'all') {
       matchesFilter = true
     } else if (filter === 'owned') {
-      matchesFilter = ['physical', 'digital', 'both'].includes(book.status)
+      // Check sub-filter for owned books
+      if (subFilter === 'all') {
+        matchesFilter = ['physical', 'digital', 'both'].includes(book.status)
+      } else if (subFilter === 'physical') {
+        matchesFilter = ['physical', 'both'].includes(book.status)
+      } else if (subFilter === 'digital') {
+        matchesFilter = ['digital', 'both'].includes(book.status)
+      }
     } else {
       matchesFilter = book.status === filter
     }
@@ -288,40 +296,87 @@ export default function BookTracker() {
         {/* Filter Pills */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
-            onClick={() => setFilter('all')}
+            onClick={() => {
+              setFilter('all')
+              setSubFilter('all')
+            }}
             className={`filter-pill whitespace-nowrap ${filter === 'all' ? 'filter-pill-active' : 'filter-pill-inactive'}`}
           >
             All Books ({books.length})
           </button>
           <button
-            onClick={() => setFilter('owned')}
+            onClick={() => {
+              setFilter('owned')
+              setSubFilter('all')
+            }}
             className={`filter-pill whitespace-nowrap ${filter === 'owned' ? 'filter-pill-active' : 'filter-pill-inactive'}`}
           >
-            <Library className="w-4 h-4 mr-1" />
             Owned ({ownedCount})
           </button>
           <button
-            onClick={() => setFilter('wishlist')}
+            onClick={() => {
+              setFilter('wishlist')
+              setSubFilter('all')
+            }}
             className={`filter-pill whitespace-nowrap ${filter === 'wishlist' ? 'filter-pill-active' : 'filter-pill-inactive'}`}
           >
-            <Heart className="w-4 h-4 mr-1" />
             Wishlist ({wishlistCount})
           </button>
           <button
-            onClick={() => setFilter('read')}
+            onClick={() => {
+              setFilter('read')
+              setSubFilter('all')
+            }}
             className={`filter-pill whitespace-nowrap ${filter === 'read' ? 'filter-pill-active' : 'filter-pill-inactive'}`}
           >
-            <BookCheck className="w-4 h-4 mr-1" />
             Read ({readCount})
           </button>
           <button
-            onClick={() => setFilter('lent')}
+            onClick={() => {
+              setFilter('lent')
+              setSubFilter('all')
+            }}
             className={`filter-pill whitespace-nowrap ${filter === 'lent' ? 'filter-pill-active' : 'filter-pill-inactive'}`}
           >
-            <UserCheck className="w-4 h-4 mr-1" />
             Lent ({lentCount})
           </button>
         </div>
+
+        {/* Sub-filters for Owned */}
+        {filter === 'owned' && (
+          <div className="flex gap-2 mt-3 pl-4">
+            <button
+              onClick={() => setSubFilter('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                subFilter === 'all' 
+                  ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                  : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+              }`}
+            >
+              All Owned
+            </button>
+            <button
+              onClick={() => setSubFilter('physical')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                subFilter === 'physical' 
+                  ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                  : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+              }`}
+            >
+              Physical Books
+            </button>
+            <button
+              onClick={() => setSubFilter('digital')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                subFilter === 'digital' 
+                  ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                  : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+              }`}
+            >
+              Digital Copies
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Enhanced Book Grid */}
