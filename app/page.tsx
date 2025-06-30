@@ -82,6 +82,18 @@ export default function BookTracker() {
   const [duplicateBooks, setDuplicateBooks] = useState<Book[]>([])
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
 
+  // Handle URL parameters for PWA shortcuts
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const action = urlParams.get('action')
+    
+    if (action === 'add') {
+      setShowAddForm(true)
+    } else if (action === 'scan') {
+      setShowBarcodeScanner(true)
+    }
+  }, [])
+
   // Debounced Google Books search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -414,7 +426,7 @@ export default function BookTracker() {
   const lentCount = books.filter(book => book.status === 'lent').length
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex flex-col mobile-container bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 touch-optimized">
       {/* Enhanced Header */}
       <header className="header-gradient text-white safe-area-top">
         <div className="px-6 py-4">
@@ -754,7 +766,7 @@ export default function BookTracker() {
       </div>
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+      <div className="fab-bottom-right flex flex-col gap-3">
         {/* Quick ISBN Search Button */}
         <button
           onClick={() => setShowISBNSearch(true)}
@@ -775,7 +787,7 @@ export default function BookTracker() {
 
       {/* Enhanced Add Book Modal */}
       {showAddForm && (
-        <div className="modal-overlay slide-up">
+        <div className="modal-overlay slide-up safe-area-bottom">
           <div className="modal-content max-w-2xl">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -1075,7 +1087,7 @@ export default function BookTracker() {
 
       {/* Duplicate Warning Modal */}
       {showDuplicateWarning && (
-        <div className="modal-overlay fade-in">
+        <div className="modal-overlay fade-in safe-area-bottom">
           <div className="modal-content max-w-lg">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
