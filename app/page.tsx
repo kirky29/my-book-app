@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash, X, Edit3, Grid3X3, List, LayoutGrid } from 'lucide-react'
+import { Search, Plus, BookOpen, Eye, Check, ChevronRight, Scan, LogOut, User, Library, Heart, BookCheck, Filter, Star, UserCheck, Hash, X, Edit3, Grid3X3, List, LayoutGrid, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useBooks } from './contexts/BookContext'
 import { useAuth } from './contexts/AuthContext'
@@ -54,7 +54,7 @@ interface GoogleBook {
 export default function BookTracker() {
   const router = useRouter()
   const { books, addBook, toggleBookStatus, loading, findDuplicates, getBooksByISBN, updateBook } = useBooks()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [showISBNSearch, setShowISBNSearch] = useState(false)
@@ -412,14 +412,7 @@ export default function BookTracker() {
     return matchesSearch && matchesFilter
   })
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-      router.push('/auth')
-    } catch (error) {
-      console.error('Error logging out:', error)
-    }
-  }
+
 
   const ownedCount = books.filter(book => ['physical', 'digital', 'both'].includes(book.status)).length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
@@ -431,25 +424,18 @@ export default function BookTracker() {
       {/* Enhanced Header */}
       <header className="header-gradient text-white safe-area-top">
         <div className="px-6 py-4">
-          {/* User Info & Actions */}
+          {/* Settings & Actions */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-white/90 text-sm">Welcome back,</p>
-                <p className="font-semibold text-white">
-                  {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Reader'}
-                </p>
-              </div>
+            <div>
+              <p className="text-white/90 text-sm">Welcome back!</p>
+              <p className="font-semibold text-white">Your personal library</p>
             </div>
             <button
-              onClick={handleLogout}
+              onClick={() => router.push('/settings')}
               className="p-3 hover:bg-white/10 rounded-xl transition-colors"
-              title="Sign Out"
+              title="Settings"
             >
-              <LogOut className="w-5 h-5" />
+              <Settings className="w-5 h-5" />
             </button>
           </div>
 
