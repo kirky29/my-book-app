@@ -195,10 +195,19 @@ export default function BookPreview() {
   const truncateDescription = (description: string, expanded: boolean) => {
     if (expanded) return description
     
-    const lines = description.split('\n')
-    if (lines.length <= 5) return description
+    // Estimate 5 lines worth of characters (approximately 300-400 characters)
+    const maxChars = 300
+    if (description.length <= maxChars) return description
     
-    return lines.slice(0, 5).join('\n') + '\n...'
+    // Find a good breaking point (end of sentence or word)
+    const truncated = description.substring(0, maxChars)
+    const lastPeriod = truncated.lastIndexOf('.')
+    const lastSpace = truncated.lastIndexOf(' ')
+    
+    // Prefer breaking at end of sentence, then at word boundary
+    const breakPoint = lastPeriod > maxChars * 0.7 ? lastPeriod + 1 : lastSpace > maxChars * 0.8 ? lastSpace : maxChars
+    
+    return description.substring(0, breakPoint) + '...'
   }
 
   return (
@@ -284,22 +293,24 @@ export default function BookPreview() {
             <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Description</h3>
-                <button
-                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  {isDescriptionExpanded ? (
-                    <>
-                      <span>Show Less</span>
-                      <ChevronUp className="w-4 h-4" />
-                    </>
-                  ) : (
-                    <>
-                      <span>Show More</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+                {bookData.description && bookData.description.length > 300 && (
+                  <button
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    {isDescriptionExpanded ? (
+                      <>
+                        <span>Show Less</span>
+                        <ChevronUp className="w-4 h-4" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Show More</span>
+                        <ChevronDown className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
               <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {truncateDescription(bookData.description, isDescriptionExpanded)}

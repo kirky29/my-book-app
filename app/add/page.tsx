@@ -213,10 +213,19 @@ export default function AddBook() {
   const truncateDescription = (description: string, expanded: boolean) => {
     if (expanded) return description
     
-    const lines = description.split('\n')
-    if (lines.length <= 5) return description
+    // Estimate 5 lines worth of characters (approximately 200-250 characters for smaller text)
+    const maxChars = 200
+    if (description.length <= maxChars) return description
     
-    return lines.slice(0, 5).join('\n') + '\n...'
+    // Find a good breaking point (end of sentence or word)
+    const truncated = description.substring(0, maxChars)
+    const lastPeriod = truncated.lastIndexOf('.')
+    const lastSpace = truncated.lastIndexOf(' ')
+    
+    // Prefer breaking at end of sentence, then at word boundary
+    const breakPoint = lastPeriod > maxChars * 0.7 ? lastPeriod + 1 : lastSpace > maxChars * 0.8 ? lastSpace : maxChars
+    
+    return description.substring(0, breakPoint) + '...'
   }
 
   // Toggle description expansion
@@ -349,7 +358,7 @@ export default function AddBook() {
                               <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
                                 {truncateDescription(book.volumeInfo.description, expandedDescriptions.has(book.id))}
                               </div>
-                              {book.volumeInfo.description.split('\n').length > 5 && (
+                              {book.volumeInfo.description.length > 200 && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
