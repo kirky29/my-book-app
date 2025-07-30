@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
-import { Camera, X, Zap, ZapOff } from 'lucide-react'
+import { Camera, X, Zap, ZapOff, AlertCircle } from 'lucide-react'
 
 interface BarcodeScannerProps {
   onScan: (isbn: string) => void
@@ -16,12 +16,13 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
   const [error, setError] = useState<string | null>(null)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
   const [flashEnabled, setFlashEnabled] = useState(false)
+  const [permissionState, setPermissionState] = useState<string>('unknown')
   const codeReader = useRef<BrowserMultiFormatReader | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
     if (isActive) {
-      startScanning()
+      checkPermissionsAndStart()
     } else {
       stopScanning()
     }
@@ -31,10 +32,43 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
     }
   }, [isActive])
 
-  const startScanning = async () => {
+  const checkPermissionsAndStart = async () => {
     try {
       setError(null)
       setIsScanning(true)
+
+      // Check if we're in a secure context
+      if (!window.isSecureContext) {
+        setError('Camera access requires HTTPS. Please use a secure connection.')
+        setHasPermission(false)
+        setIsScanning(false)
+        return
+      }
+
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Camera access is not supported in this browser.')
+        setHasPermission(false)
+        setIsScanning(false)
+        return
+      }
+
+      // Check current permission state
+      if (navigator.permissions) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'camera' as PermissionName })
+          setPermissionState(permission.state)
+          
+          if (permission.state === 'denied') {
+            setError('Camera permission denied. Please enable camera access in your browser settings and refresh the page.')
+            setHasPermission(false)
+            setIsScanning(false)
+            return
+          }
+        } catch (err) {
+          console.log('Permission query not supported, proceeding with getUserMedia')
+        }
+      }
 
       // Request camera permission
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -47,6 +81,7 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
 
       streamRef.current = stream
       setHasPermission(true)
+      setPermissionState('granted')
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
@@ -74,10 +109,26 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
           }
         })
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error starting camera:', err)
       setHasPermission(false)
-      setError('Camera access denied. Please allow camera permission and try again.')
+      
+      // Provide more specific error messages
+      if (err.name === 'NotAllowedError') {
+        setError('Camera access denied. Please allow camera permission and try again.')
+        setPermissionState('denied')
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera found. Please ensure your device has a camera.')
+      } else if (err.name === 'NotReadableError') {
+        setError('Camera is already in use by another application.')
+      } else if (err.name === 'OverconstrainedError') {
+        setError('Camera does not meet the required specifications.')
+      } else if (err.name === 'TypeError') {
+        setError('Camera access is not supported in this browser.')
+      } else {
+        setError(`Camera error: ${err.message || 'Unknown error occurred'}`)
+      }
+      
       setIsScanning(false)
     }
   }
@@ -98,6 +149,13 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
+  }
+
+  const retryCamera = () => {
+    setError(null)
+    setHasPermission(null)
+    setPermissionState('unknown')
+    checkPermissionsAndStart()
   }
 
   const toggleFlash = async () => {
@@ -122,103 +180,116 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black text-white">
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
-        <h2 className="text-lg font-medium">Scan Book Barcode</h2>
-        <button
-          onClick={toggleFlash}
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          disabled={!isScanning}
-        >
-          {flashEnabled ? (
-            <Zap className="w-6 h-6 text-yellow-400" />
-          ) : (
-            <ZapOff className="w-6 h-6" />
-          )}
-        </button>
+      <div className="bg-black text-white safe-area-top">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+          <button
+            onClick={onClose}
+            className="p-3 hover:bg-white/10 rounded-xl transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <h2 className="text-lg sm:text-xl font-semibold">Scan Barcode</h2>
+          <div className="w-11"></div> {/* Spacer for centering */}
+        </div>
       </div>
 
       {/* Camera View */}
       <div className="flex-1 relative">
-        {hasPermission === false && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black text-white p-6 text-center">
-            <div>
-              <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-semibold mb-2">Camera Access Required</h3>
-              <p className="text-gray-300 mb-4">
-                Please allow camera access to scan book barcodes
-              </p>
-              <button
-                onClick={startScanning}
-                className="btn btn-primary"
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                Allow Camera Access
-              </button>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black text-white p-6 text-center">
-            <div>
-              <div className="text-red-400 text-xl mb-4">⚠️</div>
-              <h3 className="text-xl font-semibold mb-2">Scanner Error</h3>
-              <p className="text-gray-300 mb-4">{error}</p>
-              <button
-                onClick={() => {
-                  setError(null)
-                  startScanning()
-                }}
-                className="btn btn-primary"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        )}
-
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
+          autoPlay
           playsInline
           muted
         />
-
+        
         {/* Scanning Overlay */}
-        {isScanning && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative">
-              {/* Scanning Frame */}
-              <div className="w-64 h-40 border-2 border-white rounded-lg relative">
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-primary-400 rounded-tl-lg"></div>
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-primary-400 rounded-tr-lg"></div>
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-primary-400 rounded-bl-lg"></div>
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-primary-400 rounded-br-lg"></div>
-                
-                {/* Scanning Line Animation */}
-                <div className="absolute inset-0 overflow-hidden rounded-lg">
-                  <div className="w-full h-0.5 bg-primary-400 shadow-lg animate-pulse absolute top-1/2 transform -translate-y-1/2"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative">
+            {/* Scanning Frame */}
+            <div className="w-64 h-40 sm:w-80 sm:h-48 border-2 border-white rounded-lg relative">
+              {/* Corner Indicators */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-blue-400 rounded-tl-lg"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-blue-400 rounded-tr-lg"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-blue-400 rounded-bl-lg"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-blue-400 rounded-br-lg"></div>
+            </div>
+            
+            {/* Scanning Line Animation */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-blue-400 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="absolute bottom-20 left-0 right-0 text-center text-white px-4">
+          <p className="text-lg sm:text-xl font-medium mb-2">Point camera at book barcode</p>
+          <p className="text-sm sm:text-base text-white/80">Hold steady for automatic detection</p>
+        </div>
+
+        {/* Flash Toggle */}
+        <button
+          onClick={toggleFlash}
+          className="absolute top-4 right-4 p-3 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+        >
+          {flashEnabled ? <ZapOff className="w-5 h-5" /> : <Zap className="w-5 h-5" />}
+        </button>
+
+        {/* Error Messages */}
+        {error && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-6">
+            <div className="bg-red-600 text-white px-6 py-4 rounded-lg text-center max-w-sm">
+              <div className="flex items-center justify-center mb-3">
+                <AlertCircle className="w-6 h-6 mr-2" />
+                <span className="font-semibold">Camera Error</span>
+              </div>
+              <p className="text-sm sm:text-base mb-4">{error}</p>
+              
+              {/* Additional help for permission issues */}
+              {permissionState === 'denied' && (
+                <div className="text-xs text-red-100 mb-4">
+                  <p className="mb-2">To fix this:</p>
+                  <ul className="text-left space-y-1">
+                    <li>• Click the camera icon in your browser's address bar</li>
+                    <li>• Select "Allow" for camera access</li>
+                    <li>• Refresh the page and try again</li>
+                  </ul>
                 </div>
+              )}
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={retryCamera}
+                  className="flex-1 py-2 px-4 bg-white text-red-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2 px-4 border border-white text-white rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Instructions */}
-      <div className="bg-black text-white p-4 text-center">
-        <p className="text-gray-300">
-          Point your camera at the book's barcode (usually on the back cover)
-        </p>
-        <p className="text-sm text-gray-400 mt-1">
-          The scanner will automatically detect ISBN barcodes
-        </p>
+        {/* Loading State */}
+        {isScanning && !error && hasPermission === null && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+            <div className="bg-black/80 text-white px-6 py-4 rounded-lg text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-3"></div>
+              <p className="text-sm sm:text-base">Initializing camera...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Scanning State */}
+        {isScanning && !error && hasPermission === true && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-lg text-center">
+            <p className="text-sm sm:text-base">Scanning...</p>
+          </div>
+        )}
       </div>
     </div>
   )
