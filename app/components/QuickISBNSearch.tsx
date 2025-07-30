@@ -241,7 +241,7 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                   <div className="flex gap-3 mb-3">
                     {result.volumeInfo.imageLinks?.thumbnail && (
                       <img 
-                        src={result.volumeInfo.imageLinks.thumbnail} 
+                        src={`https://books.google.com/books/publisher/content/images/frontcover/${result.id}?fife=w200-h300&source=gbs_api`} 
                         alt={result.volumeInfo.title}
                         className="w-12 h-16 object-cover rounded flex-shrink-0"
                         style={{
@@ -249,6 +249,11 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                         }}
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          // Fallback to thumbnail if high-res image fails
+                          const target = e.target as HTMLImageElement
+                          target.src = result.volumeInfo.imageLinks?.thumbnail || ''
+                        }}
                       />
                     )}
                     <div className="flex-1">

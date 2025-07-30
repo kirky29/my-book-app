@@ -154,7 +154,17 @@ export default function BookTracker() {
     if (existingBook) {
       router.push(`/book/${existingBook.id}`)
     } else {
-      router.push(`/add/preview?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&isbn=${encodeURIComponent(isbn)}&cover=${encodeURIComponent(book.volumeInfo.imageLinks?.thumbnail || '')}`)
+      // Use high-quality cover image URL
+      const getHighResCover = (bookId: string, thumbnailUrl: string) => {
+        if (!bookId) {
+          return thumbnailUrl || ''
+        }
+        // Use the much better Google Books publisher content URL
+        return `https://books.google.com/books/publisher/content/images/frontcover/${bookId}?fife=w400-h600&source=gbs_api`
+      }
+      
+      const coverUrl = getHighResCover(book.id, book.volumeInfo.imageLinks?.thumbnail || '')
+      router.push(`/add/preview?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&isbn=${encodeURIComponent(isbn)}&cover=${encodeURIComponent(coverUrl)}`)
     }
   }
 

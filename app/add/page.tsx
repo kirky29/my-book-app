@@ -105,28 +105,31 @@ export default function AddBook() {
           const title = book.volumeInfo.title || 'Unknown Title'
           const author = authors.join(', ')
           
-          // Get higher resolution cover image
-          const getHighResCover = (thumbnailUrl: string) => {
-            if (!thumbnailUrl) return ''
-            
-            // Try to get the highest quality image available
-            let highResUrl = thumbnailUrl
-              .replace('&edge=curl', '') // Remove curl effect
-              .replace('&zoom=1', '&zoom=5') // Increase zoom
-              .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
-            
-            // If the URL contains 'books.google.com', we can try to get even higher resolution
-            if (highResUrl.includes('books.google.com')) {
-              // Try to get extra large version if available
-              highResUrl = highResUrl.replace('zoom=5', 'zoom=8')
+          // Get high-quality cover image using Google Books publisher content URL
+          const getHighResCover = (bookId: string, thumbnailUrl: string) => {
+            if (!bookId) {
+              // Fallback to thumbnail URL if no book ID available
+              if (!thumbnailUrl) return ''
               
-              // Add additional quality parameters
-              if (!highResUrl.includes('&img=1')) {
-                highResUrl += '&img=1'
+              // Try to improve thumbnail URL quality
+              let highResUrl = thumbnailUrl
+                .replace('&edge=curl', '') // Remove curl effect
+                .replace('&zoom=1', '&zoom=5') // Increase zoom
+                .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+              
+              if (highResUrl.includes('books.google.com')) {
+                highResUrl = highResUrl.replace('zoom=5', 'zoom=8')
+                if (!highResUrl.includes('&img=1')) {
+                  highResUrl += '&img=1'
+                }
               }
+              
+              return highResUrl
             }
             
-            return highResUrl
+            // Use the much better Google Books publisher content URL
+            // This provides much higher quality images with customizable sizes
+            return `https://books.google.com/books/publisher/content/images/frontcover/${bookId}?fife=w400-h600&source=gbs_api`
           }
           
           // Navigate to preview page with book data
@@ -134,7 +137,7 @@ export default function AddBook() {
             title: title,
             author: author,
             isbn: cleanedCode,
-            cover: getHighResCover(book.volumeInfo.imageLinks?.thumbnail || ''),
+            cover: getHighResCover(book.id, book.volumeInfo.imageLinks?.thumbnail || ''),
             publisher: book.volumeInfo.publisher || '',
             publishedDate: book.volumeInfo.publishedDate || '',
             pageCount: book.volumeInfo.pageCount?.toString() || '',
@@ -166,37 +169,31 @@ export default function AddBook() {
     const title = book.volumeInfo.title || 'Unknown Title'
     const author = authors.join(', ')
     
-    // Get higher resolution cover image with multiple fallback options
-    const getHighResCover = (thumbnailUrl: string) => {
-      if (!thumbnailUrl) return ''
-      
-      // Try to get the highest quality image available
-      // Google Books API provides different image sizes:
-      // - small: 128px
-      // - thumbnail: 128px with curl effect
-      // - smallThumbnail: 80px
-      // - medium: 240px
-      // - large: 400px
-      // - extraLarge: 800px
-      
-      // First, try to get the large version (400px)
-      let highResUrl = thumbnailUrl
-        .replace('&edge=curl', '') // Remove curl effect
-        .replace('&zoom=1', '&zoom=5') // Increase zoom
-        .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
-      
-      // If the URL contains 'books.google.com', we can try to get even higher resolution
-      if (highResUrl.includes('books.google.com')) {
-        // Try to get extra large version if available
-        highResUrl = highResUrl.replace('zoom=5', 'zoom=8')
+    // Get high-quality cover image using Google Books publisher content URL
+    const getHighResCover = (bookId: string, thumbnailUrl: string) => {
+      if (!bookId) {
+        // Fallback to thumbnail URL if no book ID available
+        if (!thumbnailUrl) return ''
         
-        // Add additional quality parameters
-        if (!highResUrl.includes('&img=1')) {
-          highResUrl += '&img=1'
+        // Try to improve thumbnail URL quality
+        let highResUrl = thumbnailUrl
+          .replace('&edge=curl', '') // Remove curl effect
+          .replace('&zoom=1', '&zoom=5') // Increase zoom
+          .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+        
+        if (highResUrl.includes('books.google.com')) {
+          highResUrl = highResUrl.replace('zoom=5', 'zoom=8')
+          if (!highResUrl.includes('&img=1')) {
+            highResUrl += '&img=1'
+          }
         }
+        
+        return highResUrl
       }
       
-      return highResUrl
+      // Use the much better Google Books publisher content URL
+      // This provides much higher quality images with customizable sizes
+      return `https://books.google.com/books/publisher/content/images/frontcover/${bookId}?fife=w400-h600&source=gbs_api`
     }
     
     // Navigate to preview page with book data
@@ -204,7 +201,7 @@ export default function AddBook() {
       title: title,
       author: author,
       isbn: isbn,
-      cover: getHighResCover(book.volumeInfo.imageLinks?.thumbnail || ''),
+      cover: getHighResCover(book.id, book.volumeInfo.imageLinks?.thumbnail || ''),
       publisher: book.volumeInfo.publisher || '',
       publishedDate: book.volumeInfo.publishedDate || '',
       pageCount: book.volumeInfo.pageCount?.toString() || '',
