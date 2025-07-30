@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Plus, BookOpen, Calendar, User, Hash, Globe, FileText, Building } from 'lucide-react'
+import { ArrowLeft, Plus, BookOpen, Calendar, User, Hash, Globe, FileText, Building, ChevronDown, ChevronUp } from 'lucide-react'
 import { useBooks } from '../../contexts/BookContext'
 import { useStatusOptions } from '../../contexts/StatusOptionsContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -37,6 +37,7 @@ export default function BookPreview() {
   const [showSimilarBooksModal, setShowSimilarBooksModal] = useState(false)
   const [similarBooks, setSimilarBooks] = useState<any[]>([])
   const [isAdding, setIsAdding] = useState(false)
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
   // Set default status when status options are loaded
   useEffect(() => {
@@ -190,6 +191,16 @@ export default function BookPreview() {
     }
   }
 
+  // Helper function to truncate description to first 5 lines
+  const truncateDescription = (description: string, expanded: boolean) => {
+    if (expanded) return description
+    
+    const lines = description.split('\n')
+    if (lines.length <= 5) return description
+    
+    return lines.slice(0, 5).join('\n') + '\n...'
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
@@ -271,10 +282,28 @@ export default function BookPreview() {
           {/* Book Description */}
           {bookData.description && (
             <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {bookData.description}
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Description</h3>
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  {isDescriptionExpanded ? (
+                    <>
+                      <span>Show Less</span>
+                      <ChevronUp className="w-4 h-4" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Show More</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {truncateDescription(bookData.description, isDescriptionExpanded)}
+              </div>
             </div>
           )}
 

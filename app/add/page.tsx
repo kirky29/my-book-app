@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, Camera, Plus, BookOpen, X, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Search, Camera, Plus, BookOpen, X, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { useBooks } from '../contexts/BookContext'
 import { useStatusOptions } from '../contexts/StatusOptionsContext'
 import BarcodeScanner from '../components/BarcodeScanner'
@@ -49,6 +49,7 @@ export default function AddBook() {
     language: '',
     description: ''
   })
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set())
 
   // Search Google Books API
   const searchGoogleBooks = async (query: string) => {
@@ -208,6 +209,27 @@ export default function AddBook() {
     return status || { name: 'Unknown', color: 'gray', icon: '❓' }
   }
 
+  // Helper function to truncate description to first 5 lines
+  const truncateDescription = (description: string, expanded: boolean) => {
+    if (expanded) return description
+    
+    const lines = description.split('\n')
+    if (lines.length <= 5) return description
+    
+    return lines.slice(0, 5).join('\n') + '\n...'
+  }
+
+  // Toggle description expansion
+  const toggleDescription = (bookId: string) => {
+    const newExpanded = new Set(expandedDescriptions)
+    if (newExpanded.has(bookId)) {
+      newExpanded.delete(bookId)
+    } else {
+      newExpanded.add(bookId)
+    }
+    setExpandedDescriptions(newExpanded)
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
@@ -296,8 +318,7 @@ export default function AddBook() {
                   {searchResults.map((book) => (
                     <div 
                       key={book.id}
-                      onClick={() => selectBook(book)}
-                      className="bg-white border border-gray-200 rounded-xl p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="bg-white border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex gap-4">
                         {book.volumeInfo.imageLinks?.thumbnail ? (
@@ -317,14 +338,46 @@ export default function AddBook() {
                             {book.volumeInfo.authors?.join(', ') || 'Unknown Author'}
                           </p>
                           {book.volumeInfo.publishedDate && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 mb-2">
                               Published: {book.volumeInfo.publishedDate}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                          
+                          {/* Description */}
+                          {book.volumeInfo.description && (
+                            <div className="mb-3">
+                              <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                {truncateDescription(book.volumeInfo.description, expandedDescriptions.has(book.id))}
+                              </div>
+                              {book.volumeInfo.description.split('\n').length > 5 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleDescription(book.id)
+                                  }}
+                                  className="text-xs text-blue-600 hover:text-blue-700 transition-colors mt-1"
+                                >
+                                  {expandedDescriptions.has(book.id) ? (
+                                    <span className="flex items-center gap-1">
+                                      Show Less <ChevronUp className="w-3 h-3" />
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1">
+                                      Show More <ChevronDown className="w-3 h-3" />
+                                    </span>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => selectBook(book)}
+                              className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                            >
                               Add to Library
-                            </span>
+                            </button>
                           </div>
                         </div>
                       </div>
