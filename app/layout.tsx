@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { BookProvider } from './contexts/BookContext'
+import { StatusOptionsProvider } from './contexts/StatusOptionsContext'
+import { SeriesProvider } from './contexts/SeriesContext'
+import { TagsProvider } from './contexts/TagsContext'
 import AuthWrapper from './components/AuthWrapper'
 
 export const metadata: Metadata = {
@@ -81,11 +84,17 @@ export default function RootLayout({
         <AuthProvider>
           <AuthWrapper>
             <BookProvider>
-              <div className="flex justify-center min-h-screen">
-                <div className="w-full max-w-lg lg:max-w-2xl bg-white/95 backdrop-blur-sm min-h-screen shadow-2xl border-x border-gray-100">
-                  {children}
-                </div>
-              </div>
+              <StatusOptionsProvider>
+                <SeriesProvider>
+                  <TagsProvider>
+                    <div className="flex justify-center min-h-screen">
+                      <div className="w-full max-w-lg lg:max-w-2xl bg-white/95 backdrop-blur-sm min-h-screen shadow-2xl border-x border-gray-100">
+                        {children}
+                      </div>
+                    </div>
+                  </TagsProvider>
+                </SeriesProvider>
+              </StatusOptionsProvider>
             </BookProvider>
           </AuthWrapper>
         </AuthProvider>

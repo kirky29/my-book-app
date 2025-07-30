@@ -1,27 +1,63 @@
-# Book Tracker App
+# Book Tracker - "Do I Own This Book?"
 
-A simple, mobile-first web application for tracking your book collection and wishlist. Perfect for checking if you already own a book while shopping in bookstores.
+A simple, focused mobile app that answers one question: **"Do I already own this book?"**
 
-## Features
+Perfect for bookstore browsing - when you see an interesting book but can't remember if you already have it, just open the app and check!
 
-- 📱 **Mobile-optimized interface** - Designed specifically for phone screens
-- 📚 **Track owned books** - Keep a record of books you already have
-- 📖 **Wishlist management** - Save books you want to read or buy
-- 🔍 **Quick search** - Find books by title or author instantly
-- 📷 **Barcode scanner** - Scan book ISBNs with your phone's camera for instant book lookup
-- 🌐 **Google Books integration** - Search and add books with accurate information and covers
-- 🖼️ **Book covers** - Visual book covers for easy identification
-- 📄 **Detailed book profiles** - View comprehensive book information and metadata
-- 📝 **Personal notes** - Add and edit your thoughts, quotes, and reminders for each book
-- 📊 **Rich book data** - Publisher, publication date, page count, ISBN, and categories
-- 💾 **Local storage** - Data persists between sessions
-- ⚡ **Fast and responsive** - Built with Next.js and Tailwind CSS
+## 🎯 Core Purpose
 
-## Use Case
+**Primary Use Case**: You're in a bookstore, see an interesting book, and want to quickly check if you already own it.
 
-Perfect for bookstore browsing! When you see an interesting book but can't remember if you already own it, simply open the app and search to check your collection.
+## ✨ Key Features
 
-## Getting Started
+- 🔍 **Instant Search** - Search by title or author to see if you own it
+- 📷 **Barcode Scanner** - Scan ISBN for instant lookup
+- 📚 **Simple Library** - Clean list of books you own
+- ➕ **Quick Add** - Fast way to add books you buy
+- ☁️ **Cloud Sync** - Your library syncs across all devices
+- 📱 **Mobile-First** - Designed for phone use in stores
+
+## 🚀 How It Works
+
+### 1. **Quick Check** (Main Use Case)
+- Open the app
+- Type the book title or author
+- Instantly see if you own it (green checkmark) or not
+- If you don't own it, you can add it to your library
+
+### 2. **Barcode Scanning**
+- Tap the scan button
+- Point camera at book's ISBN barcode
+- App automatically looks up the book
+- Add it to your library with one tap
+
+### 3. **Simple Library Management**
+- View all your books in a clean list
+- Each book shows: title, author, cover, and ownership status
+- Export your library as backup
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 14 with TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Auth
+- **Icons**: Lucide React
+- **Barcode Scanning**: ZXing library
+
+## 📱 Mobile Features
+
+- Touch-optimized interface
+- PWA-ready (can be added to home screen)
+- Camera access for barcode scanning
+- Fast loading and smooth animations
+- Works offline (with sync when online)
+
+## 🎨 Design Philosophy
+
+**Simplicity First**: This app does one thing really well - helping you remember which books you own. No complex features, no overwhelming options, just a clean, fast way to check your library.
+
+## 🚀 Getting Started
 
 ### Development
 
@@ -39,56 +75,45 @@ npm run dev
 
 ### Deployment
 
-This app is ready to deploy on Vercel:
+Ready to deploy on Vercel:
 
 1. Push to GitHub
 2. Connect your GitHub repository to Vercel
 3. Deploy with one click
 
-## How to Use
+## 📖 Usage Guide
 
-1. **Add books**: Tap the "+" button to add a new book
-   - **Search mode**: Search Google Books database for accurate book information
-   - **Scan mode**: Use your camera to scan book barcodes for instant lookup
-   - **Manual mode**: Enter book details manually
-2. **Mark ownership**: Choose between "I Own This" or "Wishlist"
-3. **Search quickly**: Use the search bar to find specific books in your collection
-4. **Filter by status**: Toggle between All, Owned, and Wishlist
-5. **View book details**: Tap any book to see its full profile page with:
-   - Larger book cover image
-   - Complete description and metadata
-   - Publisher, publication date, page count, ISBN
-   - Book categories and additional information
-6. **Add personal notes**: Use the notes section to save your thoughts and quotes
-7. **Manage books**: Toggle status between owned/wishlist or remove books entirely
-8. **Quick actions**: Use the status toggle button on book cards for fast updates
+### Adding Books
+1. **Search Method**: Type book title/author → select from results → add to library
+2. **Scan Method**: Tap scan → point at ISBN → add to library
+3. **Manual Method**: Tap "Add Book" → enter title and author → save
 
-## Tech Stack
+### Checking Your Library
+1. **Search**: Type any part of title or author
+2. **Browse**: Scroll through your complete library
+3. **Quick Stats**: See total books owned at the top
 
-- **Framework**: Next.js 14 with TypeScript
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Barcode scanning**: ZXing library for camera-based ISBN scanning
-- **Storage**: Browser localStorage
-- **Deployment**: Vercel-ready
+### Managing Your Library
+- **Export**: Download your library as JSON backup
+- **Sync**: Changes automatically sync across devices
+- **Simple**: Just title, author, cover, and ownership status
 
-## Mobile Features
+## 🎯 Perfect For
 
-- Touch-optimized interface
-- PWA-ready (can be added to home screen)
-- Responsive design for all screen sizes
-- Fast loading and smooth animations
-- Camera access for barcode scanning
-- Flash/torch support for scanning in low light
+- **Bookstore browsing** - Check if you already own a book
+- **Library visits** - Remember what you've already read
+- **Online shopping** - Avoid buying duplicates
+- **Gift giving** - Know what books someone already has
+- **Collection management** - Keep track of your personal library
 
-## Camera Permissions
+## 🔧 Configuration
 
-The barcode scanner requires camera access to function:
+The app uses Firebase for data storage and authentication. Set up your Firebase project and add the configuration to `lib/firebase.ts`.
 
-1. **First use**: Your browser will request camera permission
-2. **Allow access**: Tap "Allow" to enable barcode scanning
-3. **Scan books**: Point your camera at any book's ISBN barcode
-4. **Auto-detection**: The app automatically detects and processes ISBN codes
-5. **Instant lookup**: Scanned books are immediately searched in Google Books database
+## 📄 License
 
-**Note**: Camera permissions are only used for barcode scanning and no images are stored or transmitted. 
+MIT License - feel free to use and modify for your own projects.
+
+---
+
+**Built with ❤️ for book lovers who can't remember what they already own.** 

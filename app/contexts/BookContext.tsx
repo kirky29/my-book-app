@@ -10,7 +10,9 @@ import {
   onSnapshot, 
   orderBy, 
   query,
-  Timestamp 
+  Timestamp,
+  getDocs,
+  writeBatch
 } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from './AuthContext'
@@ -19,7 +21,7 @@ interface Book {
   id: string
   title: string
   author: string
-  status: 'owned' | 'wishlist' // Simplified status
+  status: string // Dynamic status from StatusOptions
   cover?: string
   isbn?: string
   dateAdded: string
@@ -28,6 +30,8 @@ interface Book {
   pageCount?: number
   language?: string
   edition?: string
+  description?: string
+  tagIds?: string[] // Array of tag IDs
 }
 
 interface SimilarityResult {
@@ -43,6 +47,7 @@ interface BookContextType {
   addBook: (book: Omit<Book, 'id' | 'dateAdded'>) => Promise<void>
   updateBook: (id: string, updates: Partial<Book>) => Promise<void>
   deleteBook: (id: string) => Promise<void>
+  deleteAllBooks: () => Promise<void>
   getBook: (id: string) => Book | undefined
   toggleBookStatus: (id: string) => Promise<void>
   findDuplicates: (title: string, author: string) => Book[]
@@ -90,6 +95,13 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
           dateAdded: data.dateAdded,
           cover: data.cover,
           isbn: data.isbn,
+          publisher: data.publisher,
+          publishedDate: data.publishedDate,
+          pageCount: data.pageCount,
+          language: data.language,
+          edition: data.edition,
+          description: data.description,
+          tagIds: data.tagIds || [],
         })
       })
       setBooks(booksData)
@@ -111,7 +123,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
       const booksRef = collection(db, 'users', user.uid, 'books')
       await addDoc(booksRef, {
         ...bookData,
-        dateAdded: new Date().toISOString().split('T')[0],
+        dateAdded: new Date().toISOString(),
       })
     } catch (error) {
       console.error('Error adding book:', error)
@@ -156,6 +168,28 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const deleteAllBooks = async () => {
+    if (!user) {
+      throw new Error('User must be authenticated to delete books')
+    }
+    
+    try {
+      const booksRef = collection(db, 'users', user.uid, 'books')
+      const snapshot = await getDocs(booksRef)
+      
+      // Delete all books in batches
+      const batch = writeBatch(db)
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref)
+      })
+      
+      await batch.commit()
+    } catch (error) {
+      console.error('Error deleting all books:', error)
+      throw error
+    }
+  }
+
   const getBook = (id: string) => {
     return books.find(book => book.id === id)
   }
@@ -163,18 +197,9 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   const toggleBookStatus = async (id: string) => {
     const book = getBook(id)
     if (book) {
-      // Cycle through ownership statuses: wishlist -> owned
-      let newStatus: Book['status']
-      switch (book.status) {
-        case 'wishlist':
-          newStatus = 'owned'
-          break
-        case 'owned':
-          newStatus = 'wishlist'
-          break
-        default:
-          newStatus = 'owned'
-      }
+      // For now, just toggle between first two status options
+      // This will be enhanced to cycle through all available statuses
+      const newStatus = book.status === 'physical-owned' ? 'wishlist' : 'physical-owned'
       await updateBook(id, { status: newStatus })
     }
   }
@@ -528,6 +553,7 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     addBook,
     updateBook,
     deleteBook,
+    deleteAllBooks,
     getBook,
     toggleBookStatus,
     findDuplicates,
