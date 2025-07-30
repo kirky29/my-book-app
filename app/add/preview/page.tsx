@@ -26,7 +26,7 @@ interface BookPreview {
 export default function BookPreview() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { addBook, findSimilarBooks } = useBooks()
+  const { addBook, findSimilarBooks, getBooksByISBN } = useBooks()
   const { statusOptions } = useStatusOptions()
   const { user } = useAuth()
   const { tags } = useTags()
@@ -38,6 +38,7 @@ export default function BookPreview() {
   const [similarBooks, setSimilarBooks] = useState<any[]>([])
   const [isAdding, setIsAdding] = useState(false)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
+  const [existingBooks, setExistingBooks] = useState<any[]>([])
 
   // Set default status when status options are loaded
   useEffect(() => {
@@ -60,6 +61,16 @@ export default function BookPreview() {
     language: searchParams.get('language') || undefined,
     description: searchParams.get('description') || undefined
   }
+
+  // Check for existing books with same ISBN
+  useEffect(() => {
+    if (bookData.isbn) {
+      const existing = getBooksByISBN(bookData.isbn)
+      setExistingBooks(existing)
+    } else {
+      setExistingBooks([])
+    }
+  }, [bookData.isbn, getBooksByISBN])
 
   // Check for similar books
   const checkForSimilarBooks = (title: string, author: string, isbn?: string, publisher?: string) => {
@@ -228,6 +239,50 @@ export default function BookPreview() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Existing Book Warning */}
+          {existingBooks.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                    <span className="text-amber-600 text-sm font-bold">!</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-amber-800 font-semibold mb-2">
+                    Book Already in Library
+                  </h3>
+                  <p className="text-amber-700 text-sm mb-3">
+                    This book appears to already exist in your library with the same ISBN ({bookData.isbn}).
+                  </p>
+                  <div className="space-y-2">
+                    {existingBooks.map((book) => (
+                      <div key={book.id} className="bg-white/50 rounded-lg p-3 border border-amber-200">
+                        <div className="flex items-center gap-3">
+                          {book.cover ? (
+                            <img 
+                              src={book.cover} 
+                              alt={book.title}
+                              className="w-12 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center">
+                              <BookOpen className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-amber-900 truncate">{book.title}</p>
+                            <p className="text-sm text-amber-700">by {book.author}</p>
+                            <p className="text-xs text-amber-600">Added: {new Date(book.dateAdded).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Book Cover and Basic Info */}
           <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex gap-6">
