@@ -92,6 +92,37 @@ export default function BookDetail() {
     return status || { name: 'Unknown', color: 'gray', icon: '❓' }
   }
 
+  // Function to improve existing book cover image quality
+  const getImprovedCoverUrl = (coverUrl: string) => {
+    if (!coverUrl) return ''
+    
+    // If it's already a high-quality Google Books URL, return as is
+    if (coverUrl.includes('books.google.com/books/publisher/content/images/frontcover/')) {
+      return coverUrl
+    }
+    
+    // If it's a Google Books thumbnail URL, try to improve it
+    if (coverUrl.includes('books.google.com')) {
+      let improvedUrl = coverUrl
+        .replace('&edge=curl', '') // Remove curl effect
+        .replace('&zoom=1', '&zoom=5') // Increase zoom
+        .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+      
+      // Try to get even higher resolution
+      if (improvedUrl.includes('books.google.com')) {
+        improvedUrl = improvedUrl.replace('zoom=5', 'zoom=8')
+        if (!improvedUrl.includes('&img=1')) {
+          improvedUrl += '&img=1'
+        }
+      }
+      
+      return improvedUrl
+    }
+    
+    // For other URLs, return as is
+    return coverUrl
+  }
+
 
 
   return (
@@ -115,7 +146,7 @@ export default function BookDetail() {
               <div className="flex justify-center">
                 {book.cover ? (
                   <img 
-                    src={book.cover} 
+                    src={getImprovedCoverUrl(book.cover)} 
                     alt={book.title}
                     className="w-64 h-96 sm:w-80 sm:h-[28rem] lg:w-96 lg:h-[32rem] object-contain rounded-3xl shadow-xl border border-gray-200 bg-white"
                     style={{
@@ -124,10 +155,15 @@ export default function BookDetail() {
                     loading="eager"
                     decoding="async"
                     onError={(e) => {
-                      // Fallback to placeholder if image fails to load
+                      // Fallback to original URL if improved URL fails
                       const target = e.target as HTMLImageElement
-                      target.style.display = 'none'
-                      target.nextElementSibling?.classList.remove('hidden')
+                      if (target.src !== book.cover && book.cover) {
+                        target.src = book.cover
+                      } else {
+                        // Fallback to placeholder if both fail
+                        target.style.display = 'none'
+                        target.nextElementSibling?.classList.remove('hidden')
+                      }
                     }}
                   />
                 ) : null}

@@ -72,6 +72,37 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
     setDuplicates([])
   }
 
+  // Function to improve existing book cover image quality
+  const getImprovedCoverUrl = (coverUrl: string) => {
+    if (!coverUrl) return ''
+    
+    // If it's already a high-quality Google Books URL, return as is
+    if (coverUrl.includes('books.google.com/books/publisher/content/images/frontcover/')) {
+      return coverUrl
+    }
+    
+    // If it's a Google Books thumbnail URL, try to improve it
+    if (coverUrl.includes('books.google.com')) {
+      let improvedUrl = coverUrl
+        .replace('&edge=curl', '') // Remove curl effect
+        .replace('&zoom=1', '&zoom=5') // Increase zoom
+        .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+      
+      // Try to get even higher resolution
+      if (improvedUrl.includes('books.google.com')) {
+        improvedUrl = improvedUrl.replace('zoom=5', 'zoom=8')
+        if (!improvedUrl.includes('&img=1')) {
+          improvedUrl += '&img=1'
+        }
+      }
+      
+      return improvedUrl
+    }
+    
+    // For other URLs, return as is
+    return coverUrl
+  }
+
   return (
     <div className="modal-overlay">
       <div className="modal-content max-w-lg">
@@ -141,7 +172,7 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                       <div className="flex gap-3">
                         {book.cover && (
                           <img 
-                            src={book.cover} 
+                            src={getImprovedCoverUrl(book.cover)} 
                             alt={book.title}
                             className="w-10 h-14 object-cover rounded flex-shrink-0"
                             style={{
@@ -149,6 +180,13 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                             }}
                             loading="lazy"
                             decoding="async"
+                            onError={(e) => {
+                              // Fallback to original URL if improved URL fails
+                              const target = e.target as HTMLImageElement
+                              if (target.src !== book.cover && book.cover) {
+                                target.src = book.cover
+                              }
+                            }}
                           />
                         )}
                         <div className="flex-1">
@@ -193,7 +231,7 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                       <div className="flex gap-3">
                         {book.cover && (
                           <img 
-                            src={book.cover} 
+                            src={getImprovedCoverUrl(book.cover)} 
                             alt={book.title}
                             className="w-10 h-14 object-cover rounded flex-shrink-0"
                             style={{
@@ -201,6 +239,13 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                             }}
                             loading="lazy"
                             decoding="async"
+                            onError={(e) => {
+                              // Fallback to original URL if improved URL fails
+                              const target = e.target as HTMLImageElement
+                              if (target.src !== book.cover && book.cover) {
+                                target.src = book.cover
+                              }
+                            }}
                           />
                         )}
                         <div className="flex-1">

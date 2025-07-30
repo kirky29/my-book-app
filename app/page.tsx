@@ -172,6 +172,37 @@ export default function BookTracker() {
     return statusOptions.find(status => status.id === statusId) || statusOptions[0]
   }
 
+  // Function to improve existing book cover image quality
+  const getImprovedCoverUrl = (coverUrl: string) => {
+    if (!coverUrl) return ''
+    
+    // If it's already a high-quality Google Books URL, return as is
+    if (coverUrl.includes('books.google.com/books/publisher/content/images/frontcover/')) {
+      return coverUrl
+    }
+    
+    // If it's a Google Books thumbnail URL, try to improve it
+    if (coverUrl.includes('books.google.com')) {
+      let improvedUrl = coverUrl
+        .replace('&edge=curl', '') // Remove curl effect
+        .replace('&zoom=1', '&zoom=5') // Increase zoom
+        .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+      
+      // Try to get even higher resolution
+      if (improvedUrl.includes('books.google.com')) {
+        improvedUrl = improvedUrl.replace('zoom=5', 'zoom=8')
+        if (!improvedUrl.includes('&img=1')) {
+          improvedUrl += '&img=1'
+        }
+      }
+      
+      return improvedUrl
+    }
+    
+    // For other URLs, return as is
+    return coverUrl
+  }
+
   const getBookTags = (book: Book) => {
     return tags.filter(tag => book.tagIds?.includes(tag.id) || false)
   }
@@ -799,7 +830,7 @@ export default function BookTracker() {
                       <div className="text-center">
                         {book.cover ? (
                           <img 
-                            src={book.cover} 
+                            src={getImprovedCoverUrl(book.cover)} 
                             alt={book.title}
                             className="w-full h-56 sm:h-72 object-contain rounded-lg mb-2 sm:mb-3 shadow-md hover:shadow-lg transition-shadow bg-white"
                             style={{ 
@@ -809,10 +840,15 @@ export default function BookTracker() {
                             loading="lazy"
                             decoding="async"
                             onError={(e) => {
-                              // Fallback to placeholder if image fails to load
+                              // Fallback to original URL if improved URL fails
                               const target = e.target as HTMLImageElement
-                              target.style.display = 'none'
-                              target.nextElementSibling?.classList.remove('hidden')
+                              if (target.src !== book.cover && book.cover) {
+                                target.src = book.cover
+                              } else {
+                                // Fallback to placeholder if both fail
+                                target.style.display = 'none'
+                                target.nextElementSibling?.classList.remove('hidden')
+                              }
                             }}
                           />
                         ) : (
@@ -869,7 +905,7 @@ export default function BookTracker() {
                       <div className="flex gap-3 sm:gap-5">
                         {book.cover ? (
                           <img 
-                            src={book.cover} 
+                            src={getImprovedCoverUrl(book.cover)} 
                             alt={book.title}
                             className="w-16 h-28 sm:w-20 sm:h-36 object-contain rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow bg-white"
                             style={{ 
@@ -879,10 +915,15 @@ export default function BookTracker() {
                             loading="lazy"
                             decoding="async"
                             onError={(e) => {
-                              // Fallback to placeholder if image fails to load
+                              // Fallback to original URL if improved URL fails
                               const target = e.target as HTMLImageElement
-                              target.style.display = 'none'
-                              target.nextElementSibling?.classList.remove('hidden')
+                              if (target.src !== book.cover && book.cover) {
+                                target.src = book.cover
+                              } else {
+                                // Fallback to placeholder if both fail
+                                target.style.display = 'none'
+                                target.nextElementSibling?.classList.remove('hidden')
+                              }
                             }}
                           />
                         ) : (

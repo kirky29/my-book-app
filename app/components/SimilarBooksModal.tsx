@@ -102,6 +102,37 @@ export default function SimilarBooksModal({
     return { level: 'Very Low', color: 'text-gray-500' }
   }
 
+  // Function to improve existing book cover image quality
+  const getImprovedCoverUrl = (coverUrl: string) => {
+    if (!coverUrl) return ''
+    
+    // If it's already a high-quality Google Books URL, return as is
+    if (coverUrl.includes('books.google.com/books/publisher/content/images/frontcover/')) {
+      return coverUrl
+    }
+    
+    // If it's a Google Books thumbnail URL, try to improve it
+    if (coverUrl.includes('books.google.com')) {
+      let improvedUrl = coverUrl
+        .replace('&edge=curl', '') // Remove curl effect
+        .replace('&zoom=1', '&zoom=5') // Increase zoom
+        .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+      
+      // Try to get even higher resolution
+      if (improvedUrl.includes('books.google.com')) {
+        improvedUrl = improvedUrl.replace('zoom=5', 'zoom=8')
+        if (!improvedUrl.includes('&img=1')) {
+          improvedUrl += '&img=1'
+        }
+      }
+      
+      return improvedUrl
+    }
+    
+    // For other URLs, return as is
+    return coverUrl
+  }
+
   const exactMatches = similarBooks.filter(book => book.matchType === 'exact_isbn')
   const highSimilarity = similarBooks.filter(book => 
     book.matchType !== 'exact_isbn' && book.similarityScore >= 0.7
@@ -153,7 +184,7 @@ export default function SimilarBooksModal({
                     <div className="flex items-start gap-4">
                       {result.book.cover ? (
                         <img 
-                          src={result.book.cover} 
+                          src={getImprovedCoverUrl(result.book.cover)} 
                           alt={result.book.title}
                           className="w-16 h-24 object-cover rounded-lg flex-shrink-0"
                           style={{
@@ -161,6 +192,13 @@ export default function SimilarBooksModal({
                           }}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            // Fallback to original URL if improved URL fails
+                            const target = e.target as HTMLImageElement
+                            if (target.src !== result.book.cover && result.book.cover) {
+                              target.src = result.book.cover
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -209,7 +247,7 @@ export default function SimilarBooksModal({
                     <div className="flex items-start gap-4">
                       {result.book.cover ? (
                         <img 
-                          src={result.book.cover} 
+                          src={getImprovedCoverUrl(result.book.cover)} 
                           alt={result.book.title}
                           className="w-16 h-24 object-cover rounded-lg flex-shrink-0"
                           style={{
@@ -217,6 +255,13 @@ export default function SimilarBooksModal({
                           }}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            // Fallback to original URL if improved URL fails
+                            const target = e.target as HTMLImageElement
+                            if (target.src !== result.book.cover && result.book.cover) {
+                              target.src = result.book.cover
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -268,7 +313,7 @@ export default function SimilarBooksModal({
                     <div className="flex items-start gap-4">
                       {result.book.cover ? (
                         <img 
-                          src={result.book.cover} 
+                          src={getImprovedCoverUrl(result.book.cover)} 
                           alt={result.book.title}
                           className="w-16 h-24 object-cover rounded-lg flex-shrink-0"
                           style={{
@@ -276,6 +321,13 @@ export default function SimilarBooksModal({
                           }}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            // Fallback to original URL if improved URL fails
+                            const target = e.target as HTMLImageElement
+                            if (target.src !== result.book.cover && result.book.cover) {
+                              target.src = result.book.cover
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
