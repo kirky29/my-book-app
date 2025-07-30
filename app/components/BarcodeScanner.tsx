@@ -20,44 +20,40 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
   const codeReader = useRef<BrowserMultiFormatReader | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const lastScannedRef = useRef<string>('')
-  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isProcessingRef = useRef<boolean>(false)
+  const scanCountRef = useRef<number>(0)
 
-  // Debounced scan handler to prevent multiple rapid scans
+  // Immediate scan handler - no debouncing for faster response
   const handleScan = useCallback((scannedText: string) => {
-    if (isProcessingRef.current || scannedText === lastScannedRef.current) {
+    // Prevent duplicate scans
+    if (scannedText === lastScannedRef.current) {
       return
     }
 
-    // Simple validation - check if it looks like a barcode (10+ digits)
-    const cleanText = scannedText.replace(/[^0-9X]/g, '')
-    if (cleanText.length < 10) {
+    // Very lenient validation - accept any text with 6+ characters
+    if (scannedText.length < 6) {
       return
     }
 
-    isProcessingRef.current = true
+    // Count successful scans to prevent false positives
+    scanCountRef.current++
+    
+    // Accept after just 1 successful scan for faster response
+    if (scanCountRef.current < 1) {
+      lastScannedRef.current = scannedText
+      return
+    }
+
+    // Reset counter and process immediately
+    scanCountRef.current = 0
     lastScannedRef.current = scannedText
-
-    // Clear any existing timeout
-    if (scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current)
-    }
-
-    // Small delay to prevent duplicate scans
-    scanTimeoutRef.current = setTimeout(() => {
-      onScan(scannedText)
-      stopScanning()
-      isProcessingRef.current = false
-    }, 100)
+    
+    console.log('Barcode detected:', scannedText)
+    onScan(scannedText)
+    stopScanning()
   }, [onScan])
 
   const stopScanning = useCallback(() => {
     setIsScanning(false)
-    
-    if (scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current)
-      scanTimeoutRef.current = null
-    }
     
     if (codeReader.current) {
       codeReader.current.reset()
@@ -73,8 +69,8 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
       videoRef.current.srcObject = null
     }
 
-    isProcessingRef.current = false
     lastScannedRef.current = ''
+    scanCountRef.current = 0
   }, [])
 
   const checkPermissionsAndStart = useCallback(async () => {
@@ -97,13 +93,14 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
         return
       }
 
-      // Request camera with optimized settings
+      // Request camera with maximum performance settings
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
           width: { ideal: 1280, max: 1920 },
           height: { ideal: 720, max: 1080 },
-          frameRate: { ideal: 30, max: 60 }
+          frameRate: { ideal: 30, max: 60 },
+          aspectRatio: { ideal: 16/9 }
         }
       })
 
@@ -115,26 +112,27 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
         videoRef.current.srcObject = stream
         await videoRef.current.play()
 
-                // Initialize optimized barcode reader
+        // Initialize barcode reader with aggressive settings
         codeReader.current = new BrowserMultiFormatReader()
         
-        // Start scanning with optimized settings
-         codeReader.current.decodeFromVideoDevice(
-           null, 
-           videoRef.current, 
-           (result, error) => {
-             if (result && !isProcessingRef.current) {
-               handleScan(result.getText())
-             }
-             
-             if (error && !(error instanceof NotFoundException)) {
-               // Only log critical errors, not normal "not found" errors
-               if (error.name !== 'NotFoundException') {
-                 console.error('Barcode scanning error:', error)
-               }
-             }
-           }
-         )
+        // Start scanning with aggressive settings
+        codeReader.current.decodeFromVideoDevice(
+          null, 
+          videoRef.current, 
+          (result, error) => {
+            if (result) {
+              const scannedText = result.getText().trim()
+              if (scannedText) {
+                handleScan(scannedText)
+              }
+            }
+            
+            // Only log critical errors, not normal "not found" errors
+            if (error && !(error instanceof NotFoundException) && error.name !== 'NotFoundException') {
+              console.error('Barcode scanning error:', error)
+            }
+          }
+        )
       }
     } catch (err: any) {
       console.error('Error starting camera:', err)
@@ -173,7 +171,7 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
     setHasPermission(null)
     setPermissionState('unknown')
     lastScannedRef.current = ''
-    isProcessingRef.current = false
+    scanCountRef.current = 0
     checkPermissionsAndStart()
   }, [checkPermissionsAndStart])
 
