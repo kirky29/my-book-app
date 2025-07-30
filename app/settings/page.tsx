@@ -38,7 +38,8 @@ export default function Settings() {
     createTag,
     updateTag,
     deleteTag,
-    resetToDefaults: resetTagsToDefaults
+    resetToDefaults: resetTagsToDefaults,
+    addMissingDefaultTags
   } = useTags()
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('overview')
@@ -260,6 +261,31 @@ export default function Settings() {
     }
   }
 
+  const handleAddMissingDefaultTags = async () => {
+    try {
+      await addMissingDefaultTags()
+      alert('New default tags have been added!')
+    } catch (error) {
+      console.error('Error adding missing default tags:', error)
+      alert('Failed to add missing default tags')
+    }
+  }
+
+  const testTagSync = async () => {
+    try {
+      // Create a test tag
+      await createTag({
+        name: 'Test Tag',
+        color: 'blue',
+        icon: '🧪'
+      })
+      alert('Test tag created successfully! Check the tags list.')
+    } catch (error) {
+      console.error('Error creating test tag:', error)
+      alert('Failed to create test tag. Check console for details.')
+    }
+  }
+
   const ownedCount = books.filter(book => book.status === 'owned').length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
 
@@ -273,34 +299,36 @@ export default function Settings() {
   ]
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white safe-area-top">
-        <div className="flex items-center gap-3 px-4 sm:px-6 py-4">
-          <button 
-            onClick={() => router.back()} 
-            className="p-3 hover:bg-white/10 rounded-xl transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg sm:text-xl font-semibold">Settings</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Minimal Header */}
+      <header className="bg-white border-b border-gray-100 safe-area-top">
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.back()} 
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Settings</h1>
+          </div>
         </div>
       </header>
 
       {/* Tab Navigation */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="px-4 sm:px-6 py-2">
-          <div className="flex space-x-2 overflow-x-auto">
+      <div className="bg-white border-b border-gray-100">
+        <div className="px-4 py-2">
+          <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as SettingsTab)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -313,53 +341,53 @@ export default function Settings() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div className="px-4 py-4">
+        <div className="max-w-4xl mx-auto space-y-4">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
               {/* About Section */}
-              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-blue-600" />
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">About Book Tracker</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">About Book Tracker</h3>
                 </div>
-                <div className="space-y-3">
-                  <p className="text-gray-700 leading-relaxed">
+                <div className="space-y-2">
+                  <p className="text-gray-700 text-sm">
                     <strong>Book Tracker</strong> - "Do I own this book?" is a simple app to help you quickly check if you already own a book while shopping.
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-gray-600 text-xs">
                     Perfect for bookstores, libraries, and online shopping. Just scan a barcode or search for a book to instantly see if it's in your collection.
                   </p>
                 </div>
               </div>
 
               {/* Library Stats */}
-              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <Library className="w-5 h-5 text-green-600" />
+              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+                <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <Library className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">Library Statistics</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Library Statistics</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600">{books.length}</div>
-                    <div className="text-sm text-blue-700 font-medium">Total Books</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-blue-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600">{books.length}</div>
+                    <div className="text-xs sm:text-sm text-blue-700 font-medium">Total Books</div>
                   </div>
-                  <div className="bg-green-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl sm:text-3xl font-bold text-green-600">{ownedCount}</div>
-                    <div className="text-sm text-green-700 font-medium">Books Owned</div>
+                  <div className="bg-green-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">{ownedCount}</div>
+                    <div className="text-xs sm:text-sm text-green-700 font-medium">Books Owned</div>
                   </div>
-                  <div className="bg-amber-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl sm:text-3xl font-bold text-amber-600">{wishlistCount}</div>
-                    <div className="text-sm text-amber-700 font-medium">Wishlist</div>
+                  <div className="bg-amber-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-600">{wishlistCount}</div>
+                    <div className="text-xs sm:text-sm text-amber-700 font-medium">Wishlist</div>
                   </div>
-                  <div className="bg-purple-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600">{series.length}</div>
-                    <div className="text-sm text-purple-700 font-medium">Series</div>
+                  <div className="bg-purple-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600">{series.length}</div>
+                    <div className="text-xs sm:text-sm text-purple-700 font-medium">Series</div>
                   </div>
                 </div>
               </div>
@@ -372,45 +400,45 @@ export default function Settings() {
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900">Quick Actions</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
                     onClick={() => setActiveTab('status')}
-                    className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Palette className="w-6 h-6 text-blue-600" />
+                    <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     <div className="text-left">
-                      <p className="font-medium text-blue-900">Manage Status Options</p>
-                      <p className="text-sm text-blue-700">Customize book statuses</p>
+                      <p className="font-medium text-blue-900 text-sm sm:text-base">Manage Status Options</p>
+                      <p className="text-xs sm:text-sm text-blue-700">Customize book statuses</p>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab('series')}
-                    className="flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors"
+                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Library className="w-6 h-6 text-purple-600" />
+                    <Library className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                     <div className="text-left">
-                      <p className="font-medium text-purple-900">Manage Series</p>
-                      <p className="text-sm text-purple-700">Organize book series</p>
+                      <p className="font-medium text-purple-900 text-sm sm:text-base">Manage Series</p>
+                      <p className="text-xs sm:text-sm text-purple-700">Organize book series</p>
                     </div>
                   </button>
                   <button
                     onClick={handleExportLibrary}
-                    className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors"
+                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Download className="w-6 h-6 text-green-600" />
+                    <Download className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                     <div className="text-left">
-                      <p className="font-medium text-green-900">Export Library</p>
-                      <p className="text-sm text-green-700">Download your data</p>
+                      <p className="font-medium text-green-900 text-sm sm:text-base">Export Library</p>
+                      <p className="text-xs sm:text-sm text-green-700">Download your data</p>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab('account')}
-                    className="flex items-center gap-3 p-4 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-red-50 hover:bg-red-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Shield className="w-6 h-6 text-red-600" />
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                     <div className="text-left">
-                      <p className="font-medium text-red-900">Account Settings</p>
-                      <p className="text-sm text-red-700">Manage your account</p>
+                      <p className="font-medium text-red-900 text-sm sm:text-base">Account Settings</p>
+                      <p className="text-xs sm:text-sm text-red-700">Manage your account</p>
                     </div>
                   </button>
                 </div>
@@ -663,13 +691,31 @@ export default function Settings() {
                     </div>
                   ))}
                   
-                  <button
-                    onClick={handleResetTagsToDefaults}
-                    className="w-full flex items-center justify-center gap-2 p-4 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors border-2 border-dashed border-gray-300"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Reset to Default Tags</span>
-                  </button>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleAddMissingDefaultTags}
+                      className="w-full flex items-center justify-center gap-2 p-4 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border-2 border-dashed border-blue-300"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Missing Default Tags</span>
+                    </button>
+                    
+                    <button
+                      onClick={testTagSync}
+                      className="w-full flex items-center justify-center gap-2 p-4 text-green-600 hover:bg-green-50 rounded-xl transition-colors border-2 border-dashed border-green-300"
+                    >
+                      <span>🧪</span>
+                      <span>Test Tag Sync</span>
+                    </button>
+                    
+                    <button
+                      onClick={handleResetTagsToDefaults}
+                      className="w-full flex items-center justify-center gap-2 p-4 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors border-2 border-dashed border-gray-300"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Reset to Default Tags</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

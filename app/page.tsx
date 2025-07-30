@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, BookOpen, Check, Heart, Settings } from 'lucide-react'
+import { Search, Plus, BookOpen, Check, Heart, Settings, Filter, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { useBooks } from './contexts/BookContext'
 import { useStatusOptions } from './contexts/StatusOptionsContext'
 import { useTags } from './contexts/TagsContext'
@@ -44,6 +44,14 @@ interface GoogleBook {
   }
 }
 
+interface ActiveFilter {
+  type: 'tag' | 'series' | 'status'
+  id: string
+  name: string
+  color: string
+  icon: string
+}
+
 export default function BookTracker() {
   const router = useRouter()
   const { books, addBook, loading, findSimilarBooks } = useBooks()
@@ -68,19 +76,31 @@ export default function BookTracker() {
       })
     }
   }, [books, series])
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<GoogleBook[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [sortBy, setSortBy] = useState<'dateAdded' | 'title' | 'author'>('dateAdded')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('')
-  const [selectedSeriesFilter, setSelectedSeriesFilter] = useState<string>('')
   
-  // Debug: Log when series filter changes
+  // New advanced filtering system
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([])
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const [expandedFilterSections, setExpandedFilterSections] = useState<{
+    tags: boolean
+    series: boolean
+    status: boolean
+  }>({
+    tags: true,
+    series: true,
+    status: true
+  })
+
+  // Debug: Log when filters change
   useEffect(() => {
-    console.log('Series filter changed to:', selectedSeriesFilter)
-  }, [selectedSeriesFilter])
+    console.log('Active filters changed:', activeFilters)
+  }, [activeFilters])
 
   // Search Google Books API
   const searchGoogleBooks = async (query: string) => {
@@ -107,15 +127,16 @@ export default function BookTracker() {
   // Debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      searchGoogleBooks(searchTerm)
+      if (searchTerm.trim()) {
+        searchGoogleBooks(searchTerm)
+      } else {
+        setSearchResults([])
+      }
     }, 300)
 
     return () => clearTimeout(timeoutId)
   }, [searchTerm])
 
-
-
-  // Select book from search results
   const selectBook = (book: GoogleBook) => {
     const authors = book.volumeInfo.authors || ['Unknown Author']
     const isbn = book.volumeInfo.industryIdentifiers?.find(
@@ -124,50 +145,57 @@ export default function BookTracker() {
     const title = book.volumeInfo.title || 'Unknown Title'
     const author = authors.join(', ')
     
-    // Navigate to preview page with book data
-    const params = new URLSearchParams({
-      title: title,
-      author: author,
-      isbn: isbn,
-      cover: book.volumeInfo.imageLinks?.thumbnail || '',
-      publisher: book.volumeInfo.publisher || '',
-      publishedDate: book.volumeInfo.publishedDate || '',
-      pageCount: book.volumeInfo.pageCount?.toString() || '',
-      language: book.volumeInfo.language || '',
-      description: book.volumeInfo.description || ''
-    })
+    // Check if this book is already in library
+    const existingBook = books.find(book => 
+      (book.isbn && book.isbn.replace(/[^\dX]/gi, '') === isbn.replace(/[^\dX]/gi, '')) ||
+      (book.title.toLowerCase() === title.toLowerCase() && book.author.toLowerCase() === author.toLowerCase())
+    )
     
-    router.push(`/add/preview?${params.toString()}`)
+    if (existingBook) {
+      router.push(`/book/${existingBook.id}`)
+    } else {
+      router.push(`/add/preview?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&isbn=${encodeURIComponent(isbn)}&cover=${encodeURIComponent(book.volumeInfo.imageLinks?.thumbnail || '')}`)
+    }
   }
 
-
-
-  // Helper function to get status info
   const getStatusInfo = (statusId: string) => {
-    const status = statusOptions.find(s => s.id === statusId)
-    return status || { name: 'Unknown', color: 'gray', icon: '❓' }
+    return statusOptions.find(status => status.id === statusId) || statusOptions[0]
   }
 
-  // Helper function to get book tags
   const getBookTags = (book: Book) => {
-    if (!book.tagIds || book.tagIds.length === 0) return []
-    return tags.filter(tag => book.tagIds!.includes(tag.id))
+    return tags.filter(tag => book.tagIds?.includes(tag.id) || false)
   }
 
-  // Helper function to get book series
   const getBookSeries = (book: Book) => {
     return series.find(s => s.bookIds.includes(book.id))
   }
 
-  // Count books by status
-  const ownedCount = books.filter(book => {
-    const status = getStatusInfo(book.status)
-    return status.name.toLowerCase().includes('owned')
-  }).length
-  const wishlistCount = books.filter(book => {
-    const status = getStatusInfo(book.status)
-    return status.name.toLowerCase().includes('wishlist')
-  }).length
+  // Filter management functions
+  const addFilter = (type: 'tag' | 'series' | 'status', id: string, name: string, color: string, icon: string) => {
+    // Check if filter already exists
+    const exists = activeFilters.some(filter => filter.type === type && filter.id === id)
+    if (!exists) {
+      setActiveFilters(prev => [...prev, { type, id, name, color, icon }])
+    }
+  }
+
+  const removeFilter = (type: 'tag' | 'series' | 'status', id: string) => {
+    setActiveFilters(prev => prev.filter(filter => !(filter.type === type && filter.id === id)))
+  }
+
+  const clearAllFilters = () => {
+    setActiveFilters([])
+  }
+
+  const toggleFilterSection = (section: 'tags' | 'series' | 'status') => {
+    setExpandedFilterSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
+
+  const ownedCount = books.filter(book => book.status === 'owned').length
+  const wishlistCount = books.filter(book => book.status === 'wishlist').length
 
   // Sort books
   const sortedBooks = [...books].sort((a, b) => {
@@ -181,30 +209,26 @@ export default function BookTracker() {
         comparison = a.author.localeCompare(b.author)
         break
       case 'dateAdded':
-        // Handle both old format (YYYY-MM-DD) and new format (full ISO string)
         let dateA, dateB
-        
-        if (a.dateAdded.includes('T')) {
-          // New format: full ISO string
-          dateA = new Date(a.dateAdded)
-        } else {
-          // Old format: YYYY-MM-DD, add time to make it consistent
+        try {
           dateA = new Date(a.dateAdded + 'T12:00:00')
-        }
-        
-        if (b.dateAdded.includes('T')) {
-          // New format: full ISO string
-          dateB = new Date(b.dateAdded)
-        } else {
-          // Old format: YYYY-MM-DD, add time to make it consistent
           dateB = new Date(b.dateAdded + 'T12:00:00')
+          
+          // Validate that the dates are valid
+          if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+            throw new Error('Invalid date')
+          }
+        } catch (error) {
+          // If date parsing fails, use current date
+          dateA = new Date()
+          dateB = new Date()
         }
         
         comparison = dateA.getTime() - dateB.getTime()
         
-        // Debug logging
+        // Debug logging - with safe date conversion
         console.log(`Sorting: ${a.title} (${a.dateAdded}) vs ${b.title} (${b.dateAdded})`)
-        console.log(`Date A: ${dateA.toISOString()}, Date B: ${dateB.toISOString()}`)
+        console.log(`Date A: ${isNaN(dateA.getTime()) ? 'Invalid Date' : dateA.toISOString()}, Date B: ${isNaN(dateB.getTime()) ? 'Invalid Date' : dateB.toISOString()}`)
         console.log(`Comparison: ${comparison}, Sort Order: ${sortOrder}`)
         break
     }
@@ -218,10 +242,11 @@ export default function BookTracker() {
     console.log(`${book.title}: ${book.dateAdded}`)
   })
   
-  // Filter books for search, tags, and series
+  // Advanced filtering logic
   const filteredBooks = sortedBooks.filter(book => {
     const bookTags = getBookTags(book)
     const bookSeries = getBookSeries(book)
+    const bookStatus = getStatusInfo(book.status)
     
     // Check if search term matches title, author, tag names, or series names
     const matchesSearch = 
@@ -231,165 +256,292 @@ export default function BookTracker() {
       bookTags.some(tag => tag.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (bookSeries && bookSeries.name.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    // Check tag filter
-    const matchesTag = !selectedTagFilter || bookTags.some(tag => tag.id === selectedTagFilter)
+    // Check if book matches all active filters
+    const matchesAllFilters = activeFilters.every(filter => {
+      switch (filter.type) {
+        case 'tag':
+          return bookTags.some(tag => tag.id === filter.id)
+        case 'series':
+          return bookSeries && bookSeries.id === filter.id
+        case 'status':
+          return bookStatus.id === filter.id
+        default:
+          return true
+      }
+    })
     
-    // Check series filter
-    const matchesSeries = !selectedSeriesFilter || (bookSeries && bookSeries.id === selectedSeriesFilter)
-    
-    // Debug logging for series filtering
-    if (selectedSeriesFilter) {
-      console.log(`Book: ${book.title}, Series: ${bookSeries?.name || 'None'}, Series ID: ${bookSeries?.id || 'None'}, Selected: ${selectedSeriesFilter}, matchesSeries: ${matchesSeries}`)
-    }
-    
-    return matchesSearch && matchesTag && matchesSeries
+    return matchesSearch && matchesAllFilters
   })
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white safe-area-top">
-        <div className="px-4 sm:px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Minimal Header */}
+      <header className="bg-white border-b border-gray-100 safe-area-top">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Book Tracker</h1>
-              <p className="text-blue-100 text-sm sm:text-base">Do I own this book?</p>
+              <h1 className="text-lg font-semibold text-gray-900">Book Tracker</h1>
+              <p className="text-xs text-gray-500">{ownedCount} owned</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => router.push('/add')}
-                className="p-3 sm:p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
                 title="Add Book"
               >
-                <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Plus className="w-5 h-5" />
               </button>
               <button
                 onClick={() => router.push('/settings')}
-                className="p-3 sm:p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
                 title="Settings"
               >
-                <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Settings className="w-5 h-5" />
               </button>
-            </div>
-          </div>
-          
-          {/* Stats */}
-          <div className="mt-4 flex items-center gap-3 sm:gap-4">
-            <div className="bg-white/10 rounded-xl p-3 sm:p-4 text-center flex-1">
-              <div className="text-xl sm:text-2xl font-bold">{ownedCount}</div>
-              <div className="text-xs sm:text-sm text-blue-100">Books Owned</div>
-            </div>
-            <div className="bg-white/10 rounded-xl p-3 sm:p-4 text-center flex-1">
-              <div className="text-xl sm:text-2xl font-bold">{wishlistCount}</div>
-              <div className="text-xs sm:text-sm text-blue-100">Wishlist</div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Search Section */}
-      <div className="px-4 sm:px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-100">
-        <div className="space-y-3">
+      {/* Search and Filters */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="px-4 py-3">
           {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search by title, author, tags, or series..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-            />
+          <div className="flex items-center gap-3 mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search books..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            
+            {/* Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilterPanel(!showFilterPanel)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm flex-shrink-0 ${
+                activeFilters.length > 0
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+              {activeFilters.length > 0 && (
+                <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center font-medium">
+                  {activeFilters.length}
+                </span>
+              )}
+            </button>
           </div>
           
-          {/* Tag Filter */}
-          {tags.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by tag:</span>
-              <button
-                onClick={() => setSelectedTagFilter('')}
-                className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedTagFilter === ''
-                    ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                }`}
-              >
-                All Books
-              </button>
-              {tags.map((tag) => (
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-3 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Active Filters</span>
                 <button
-                  key={tag.id}
-                  onClick={() => setSelectedTagFilter(selectedTagFilter === tag.id ? '' : tag.id)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
-                    selectedTagFilter === tag.id
-                      ? `bg-${tag.color}-100 text-${tag.color}-700 border border-${tag.color}-200`
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                  }`}
+                  onClick={clearAllFilters}
+                  className="text-xs text-red-600 hover:text-red-700 font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                 >
-                  <span className="text-base">{tag.icon}</span>
-                  <span>{tag.name}</span>
+                  Clear All
                 </button>
-              ))}
-            </div>
-          )}
-          
-          {/* Series Filter */}
-          {series.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by series:</span>
-              <button
-                onClick={() => {
-                  console.log('All Books button clicked')
-                  setSelectedSeriesFilter('')
-                }}
-                className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedSeriesFilter === ''
-                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                }`}
-              >
-                All Books
-              </button>
-              {series.map((seriesItem) => (
-                <button
-                  key={seriesItem.id}
-                  onClick={() => {
-                    console.log('Series button clicked:', seriesItem.name, seriesItem.id)
-                    setSelectedSeriesFilter(selectedSeriesFilter === seriesItem.id ? '' : seriesItem.id)
-                  }}
-                  className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
-                    selectedSeriesFilter === seriesItem.id
-                      ? `bg-${seriesItem.color}-100 text-${seriesItem.color}-700 border border-${seriesItem.color}-200`
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
-                  }`}
-                >
-                  <span className="text-base">{seriesItem.icon}</span>
-                  <span>{seriesItem.name}</span>
-                </button>
-              ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeFilters.map((filter) => (
+                  <span
+                    key={`${filter.type}-${filter.id}`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-${filter.color}-100 text-${filter.color}-700 border border-${filter.color}-200`}
+                  >
+                    <span className="text-xs">{filter.icon}</span>
+                    <span>{filter.name}</span>
+                    <button
+                      onClick={() => removeFilter(filter.type, filter.id)}
+                      className="ml-1 hover:bg-red-100 rounded-full p-0.5 transition-colors"
+                      title="Remove filter"
+                    >
+                      <X className="w-3 h-3 text-red-600" />
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="spinner h-12 w-12 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your library...</p>
+      {/* Advanced Filter Panel */}
+      {showFilterPanel && (
+        <div className="bg-white border-b border-gray-100">
+          <div className="px-4 py-4">
+            <div className="space-y-4">
+              {/* Status Filters */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => toggleFilterSection('status')}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-900">Status</span>
+                    <span className="text-xs text-gray-500">({statusOptions.length})</span>
+                  </div>
+                  {expandedFilterSections.status ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+                
+                {expandedFilterSections.status && (
+                  <div className="flex flex-wrap gap-2">
+                    {statusOptions.map((status) => {
+                      const isActive = activeFilters.some(f => f.type === 'status' && f.id === status.id)
+                      return (
+                        <button
+                          key={status.id}
+                          onClick={() => {
+                            if (isActive) {
+                              removeFilter('status', status.id)
+                            } else {
+                              addFilter('status', status.id, status.name, status.color, status.icon)
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                            isActive
+                              ? `bg-${status.color}-100 text-${status.color}-700 border border-${status.color}-200`
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          <span className="text-xs">{status.icon}</span>
+                          <span>{status.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tag Filters */}
+              {tags.length > 0 && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => toggleFilterSection('tags')}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">Tags</span>
+                      <span className="text-xs text-gray-500">({tags.length})</span>
+                    </div>
+                    {expandedFilterSections.tags ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                  
+                  {expandedFilterSections.tags && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => {
+                        const isActive = activeFilters.some(f => f.type === 'tag' && f.id === tag.id)
+                        return (
+                          <button
+                            key={tag.id}
+                            onClick={() => {
+                              if (isActive) {
+                                removeFilter('tag', tag.id)
+                              } else {
+                                addFilter('tag', tag.id, tag.name, tag.color, tag.icon)
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                              isActive
+                                ? `bg-${tag.color}-100 text-${tag.color}-700 border border-${tag.color}-200`
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            <span className="text-xs">{tag.icon}</span>
+                            <span>{tag.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Series Filters */}
+              {series.length > 0 && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => toggleFilterSection('series')}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">Series</span>
+                      <span className="text-xs text-gray-500">({series.length})</span>
+                    </div>
+                    {expandedFilterSections.series ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                  
+                  {expandedFilterSections.series && (
+                    <div className="flex flex-wrap gap-2">
+                      {series.map((seriesItem) => {
+                        const isActive = activeFilters.some(f => f.type === 'series' && f.id === seriesItem.id)
+                        return (
+                          <button
+                            key={seriesItem.id}
+                            onClick={() => {
+                              if (isActive) {
+                                removeFilter('series', seriesItem.id)
+                              } else {
+                                addFilter('series', seriesItem.id, seriesItem.name, seriesItem.color, seriesItem.icon)
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                              isActive
+                                ? `bg-${seriesItem.color}-100 text-${seriesItem.color}-700 border border-${seriesItem.color}-200`
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            <span className="text-xs">{seriesItem.icon}</span>
+                            <span>{seriesItem.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        ) : (searchTerm && !selectedTagFilter && !selectedSeriesFilter) ? (
+        </div>
+      )}
+
+      {/* Content - Full page scroll */}
+      <div className="px-3 sm:px-6 py-3 sm:py-4">
+        {loading ? (
+          <div className="text-center py-8 sm:py-12">
+            <div className="spinner h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4"></div>
+            <p className="text-gray-600 text-sm sm:text-base">Loading your library...</p>
+          </div>
+        ) : (searchTerm && activeFilters.length === 0) ? (
           // Search Results (only when no filters are active)
-          <div className="space-y-4">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
               {isSearching ? 'Searching...' : 'Search Results'}
             </h3>
             
             {/* Google Books Results */}
             {searchResults.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm sm:text-base font-medium text-gray-700">Add to Library:</h4>
+              <div className="space-y-2 sm:space-y-3">
+                <h4 className="text-xs sm:text-base font-medium text-gray-700">Add to Library:</h4>
                 {searchResults.map((book) => {
                   const authors = book.volumeInfo.authors || ['Unknown Author']
                   const isbn = book.volumeInfo.industryIdentifiers?.find(
@@ -408,38 +560,38 @@ export default function BookTracker() {
                     <div 
                       key={book.id}
                       onClick={() => selectBook(book)}
-                      className={`rounded-xl p-4 sm:p-5 shadow-sm border cursor-pointer hover:shadow-md transition-shadow ${
+                      className={`rounded-lg p-3 sm:p-4 shadow-sm border cursor-pointer hover:shadow-md transition-shadow ${
                         existingBook 
                           ? 'bg-green-50 border-green-200' 
                           : 'bg-white border-gray-200'
                       }`}
                     >
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 sm:gap-4">
                         {book.volumeInfo.imageLinks?.thumbnail ? (
                           <img 
                             src={book.volumeInfo.imageLinks.thumbnail} 
                             alt={book.volumeInfo.title}
-                            className="w-20 h-32 sm:w-24 sm:h-36 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
+                            className="w-16 h-24 sm:w-20 sm:h-32 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
                           />
                         ) : (
-                          <div className="w-20 h-32 sm:w-24 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
-                            <BookOpen className="w-8 h-8 text-gray-400" />
+                          <div className="w-16 h-24 sm:w-20 sm:h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                            <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h5 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{book.volumeInfo.title}</h5>
                             {existingBook && (
-                              <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full flex-shrink-0">
+                              <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded-full flex-shrink-0">
                                 <Check className="w-3 h-3 mr-1" />
                                 Owned
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mb-2 truncate">
+                          <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">
                             {book.volumeInfo.authors?.join(', ') || 'Unknown Author'}
                           </p>
-                          <button className={`text-sm font-medium ${
+                          <button className={`text-xs sm:text-sm font-medium ${
                             existingBook 
                               ? 'text-green-600 hover:text-green-700' 
                               : 'text-blue-600 hover:text-blue-700'
@@ -456,33 +608,33 @@ export default function BookTracker() {
 
             {/* Your Library Results */}
             {filteredBooks.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm sm:text-base font-medium text-gray-700">In Your Library:</h4>
+              <div className="space-y-2 sm:space-y-3">
+                <h4 className="text-xs sm:text-base font-medium text-gray-700">In Your Library:</h4>
                 {filteredBooks.map((book) => (
                   <div 
                     key={book.id}
                     onClick={() => router.push(`/book/${book.id}`)}
-                    className="bg-green-50 border border-green-200 rounded-xl p-4 sm:p-5 cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all"
+                    className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all"
                   >
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 sm:gap-4">
                       {book.cover ? (
                         <img 
                           src={book.cover} 
                           alt={book.title}
-                          className="w-20 h-32 sm:w-24 sm:h-36 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
+                          className="w-16 h-24 sm:w-20 sm:h-32 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
                         />
                       ) : (
-                        <div className="w-20 h-32 sm:w-24 sm:h-36 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
-                          <BookOpen className="w-8 h-8 text-green-600" />
+                        <div className="w-16 h-24 sm:w-20 sm:h-32 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                          <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 flex-shrink-0" />
                           <h5 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{book.title}</h5>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 truncate">{book.author}</p>
-                        <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">{book.author}</p>
+                        <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
                           ✓ You own this
                         </span>
                       </div>
@@ -493,91 +645,51 @@ export default function BookTracker() {
             )}
 
             {!isSearching && searchResults.length === 0 && filteredBooks.length === 0 && (
-              <div className="text-center py-8">
-                <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="text-gray-600">No books found</p>
-                <p className="text-sm text-gray-500">Try a different search term</p>
+              <div className="text-center py-6 sm:py-8">
+                <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
+                <p className="text-gray-600 text-sm sm:text-base">No books found</p>
+                <p className="text-xs sm:text-sm text-gray-500">Try a different search term</p>
               </div>
             )}
           </div>
         ) : (
           // Library View
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Your Library</h3>
-              
-              {/* Sorting Controls */}
-              <div className="flex items-center gap-2">
-                {/* Sort By */}
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'dateAdded' | 'title' | 'author')}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="dateAdded">Date Added</option>
-                  <option value="title">Title</option>
-                  <option value="author">Author</option>
-                </select>
-                
-                {/* Sort Order */}
-                <button
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="p-2 text-sm border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm hover:bg-gray-50 transition-colors"
-                  title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
-                >
-                  {sortOrder === 'asc' ? '↑' : '↓'}
-                </button>
-                
-                {/* View Mode */}
-                <button
-                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                  className="p-2 text-sm border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm hover:bg-gray-50 transition-colors"
-                  title={viewMode === 'grid' ? 'List View' : 'Grid View'}
-                >
-                  {viewMode === 'grid' ? '☰' : '⊞'}
-                </button>
-              </div>
-            </div>
-
             {filteredBooks.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <BookOpen className="w-12 h-12 text-blue-600" />
+              <div className="text-center py-8 sm:py-12">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-blue-600" />
                 </div>
-                {selectedTagFilter || selectedSeriesFilter ? (
+                {activeFilters.length > 0 ? (
                   <>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">No Books Found</h3>
-                    <p className="text-gray-600 mb-8 text-lg">No books match your current filters</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">No Books Found</h3>
+                    <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-lg">No books match your current filters</p>
                     <button
-                      onClick={() => {
-                        setSelectedTagFilter('')
-                        setSelectedSeriesFilter('')
-                        setSearchTerm('')
-                      }}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95"
+                      onClick={clearAllFilters}
+                      className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95 text-sm sm:text-base"
                     >
                       Clear All Filters
                     </button>
                   </>
                 ) : books.length === 0 ? (
                   <>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">Start Your Library</h3>
-                    <p className="text-gray-600 mb-8 text-lg">Add your first book to get started</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">Start Your Library</h3>
+                    <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-lg">Add your first book to get started</p>
                     <button
                       onClick={() => router.push('/add')}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95"
+                      className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95 text-sm sm:text-base"
                     >
-                      <Plus className="w-5 h-5" />
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                       Add Your First Book
                     </button>
                   </>
                 ) : (
                   <>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">No Books Found</h3>
-                    <p className="text-gray-600 mb-8 text-lg">No books match your search criteria</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">No Books Found</h3>
+                    <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-lg">No books match your search criteria</p>
                     <button
                       onClick={() => setSearchTerm('')}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95"
+                      className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95 text-sm sm:text-base"
                     >
                       Clear Search
                     </button>
@@ -585,35 +697,122 @@ export default function BookTracker() {
                 )}
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-2 gap-4' : 'space-y-3'}>
+              <>
+                {/* Results Summary */}
+                {activeFilters.length > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      Showing {filteredBooks.length} book{filteredBooks.length !== 1 ? 's' : ''} 
+                      {activeFilters.length > 0 && (
+                        <span> matching {activeFilters.length} filter{activeFilters.length !== 1 ? 's' : ''}</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {/* Sorting Controls */}
+                <div className="flex items-center justify-end mb-4">
+                  <div className="flex items-center gap-2">
+                    {/* Sort By Dropdown */}
+                    <div className="relative">
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as 'dateAdded' | 'title' | 'author')}
+                        className="appearance-none pl-3 pr-8 py-2 text-xs sm:text-sm border border-gray-200 rounded-lg bg-white/90 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
+                      >
+                        <option value="dateAdded">📅 Date Added</option>
+                        <option value="title">📖 Title</option>
+                        <option value="author">✍️ Author</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Sort Order Toggle */}
+                    <button
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      className={`p-2 text-xs sm:text-sm border rounded-lg backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md ${
+                        sortOrder === 'asc' 
+                          ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
+                          : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+                      }`}
+                      title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
+                    >
+                      {sortOrder === 'asc' ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+                    
+                    {/* View Mode Toggle */}
+                    <button
+                      onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                      className={`p-2 text-xs sm:text-sm border rounded-lg backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md ${
+                        viewMode === 'grid' 
+                          ? 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100' 
+                          : 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                      }`}
+                      title={viewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'}
+                    >
+                      {viewMode === 'grid' ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4' : 'space-y-2 sm:space-y-3'}>
                 {filteredBooks.map((book) => (
                   <div 
                     key={book.id}
                     onClick={() => router.push(`/book/${book.id}`)}
-                    className={`bg-white rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all ${
-                      viewMode === 'grid' ? 'p-3' : 'p-4 sm:p-5'
+                    className={`bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all ${
+                      viewMode === 'grid' ? 'p-2 sm:p-3' : 'p-3 sm:p-4'
                     }`}
                   >
                     {viewMode === 'grid' ? (
-                      // Grid View
+                      // Grid View - Optimized for mobile
                       <div className="text-center">
                         {book.cover ? (
                           <img 
                             src={book.cover} 
                             alt={book.title}
-                            className="w-full h-80 sm:h-96 object-cover rounded-lg mb-3 shadow-md hover:shadow-lg transition-shadow"
+                            className="w-full h-56 sm:h-72 object-contain rounded-lg mb-2 sm:mb-3 shadow-md hover:shadow-lg transition-shadow bg-white"
+                            style={{ 
+                              aspectRatio: '2/3',
+                              imageRendering: '-webkit-optimize-contrast'
+                            }}
+                            loading="lazy"
+                            decoding="async"
                           />
                         ) : (
-                          <div className="w-full h-80 sm:h-96 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3 shadow-md">
-                            <BookOpen className="w-10 h-10 text-gray-400" />
+                          <div 
+                            className="w-full h-56 sm:h-72 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-2 sm:mb-3 shadow-md"
+                            style={{ aspectRatio: '2/3' }}
+                          >
+                            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
                           </div>
                         )}
-                        <h5 className="font-semibold text-gray-900 mb-1 text-lg truncate">{book.title}</h5>
+                        <h5 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base truncate">{book.title}</h5>
                         <p className="text-xs text-gray-600 mb-2 truncate">{book.author}</p>
                         {(() => {
                           const status = getStatusInfo(book.status)
                           return (
-                            <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full font-medium ${
+                            <span className={`inline-flex items-center px-1.5 py-0.5 text-xs rounded-full font-medium ${
                               status.name.toLowerCase().includes('owned')
                                 ? 'bg-green-100 text-green-800' 
                                 : status.name.toLowerCase().includes('wishlist')
@@ -634,14 +833,14 @@ export default function BookTracker() {
                               {bookTags.slice(0, 2).map((tag) => (
                                 <span
                                   key={tag.id}
-                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-${tag.color}-100 text-${tag.color}-800 border border-${tag.color}-200`}
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-${tag.color}-100 text-${tag.color}-800 border border-${tag.color}-200`}
                                 >
                                   <span className="text-xs">{tag.icon}</span>
                                   <span className="truncate">{tag.name}</span>
                                 </span>
                               ))}
                               {bookTags.length > 2 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
                                   +{bookTags.length - 2}
                                 </span>
                               )}
@@ -650,26 +849,35 @@ export default function BookTracker() {
                         })()}
                       </div>
                     ) : (
-                      // List View
-                      <div className="flex gap-5">
+                      // List View - Optimized for mobile
+                      <div className="flex gap-3 sm:gap-5">
                         {book.cover ? (
                           <img 
                             src={book.cover} 
                             alt={book.title}
-                            className="w-20 h-32 sm:w-24 sm:h-36 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
+                            className="w-16 h-28 sm:w-20 sm:h-36 object-contain rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow bg-white"
+                            style={{ 
+                              aspectRatio: '2/3',
+                              imageRendering: '-webkit-optimize-contrast'
+                            }}
+                            loading="lazy"
+                            decoding="async"
                           />
                         ) : (
-                          <div className="w-20 h-32 sm:w-24 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
-                            <BookOpen className="w-8 h-8 text-gray-400" />
+                          <div 
+                            className="w-16 h-28 sm:w-20 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md"
+                            style={{ aspectRatio: '2/3' }}
+                          >
+                            <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <h5 className="font-semibold text-gray-900 mb-2 text-base sm:text-lg truncate">{book.title}</h5>
-                          <p className="text-sm sm:text-base text-gray-600 mb-3 truncate">{book.author}</p>
+                          <h5 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-lg truncate">{book.title}</h5>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 truncate">{book.author}</p>
                           {(() => {
                             const status = getStatusInfo(book.status)
                             return (
-                              <span className={`inline-flex items-center px-3 py-1.5 text-xs sm:text-sm rounded-full font-medium ${
+                              <span className={`inline-flex items-center px-2 py-1 text-xs sm:text-sm rounded-full font-medium ${
                                 status.name.toLowerCase().includes('owned')
                                   ? 'bg-green-100 text-green-800' 
                                   : status.name.toLowerCase().includes('wishlist')
@@ -690,14 +898,14 @@ export default function BookTracker() {
                                 {bookTags.slice(0, 3).map((tag) => (
                                   <span
                                     key={tag.id}
-                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-${tag.color}-100 text-${tag.color}-800 border border-${tag.color}-200`}
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-${tag.color}-100 text-${tag.color}-800 border border-${tag.color}-200`}
                                   >
                                     <span className="text-xs">{tag.icon}</span>
                                     <span className="truncate">{tag.name}</span>
                                   </span>
                                 ))}
                                 {bookTags.length > 3 && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
                                     +{bookTags.length - 3}
                                   </span>
                                 )}
@@ -710,12 +918,11 @@ export default function BookTracker() {
                   </div>
                 ))}
               </div>
+              </>
             )}
           </div>
         )}
       </div>
-
-
     </div>
   )
 } 

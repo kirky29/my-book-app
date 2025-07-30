@@ -141,12 +141,19 @@ export default function AddBook() {
     const title = book.volumeInfo.title || 'Unknown Title'
     const author = authors.join(', ')
     
+    // Get higher resolution cover image
+    const getHighResCover = (thumbnailUrl: string) => {
+      if (!thumbnailUrl) return ''
+      // Replace thumbnail with zoom for higher resolution
+      return thumbnailUrl.replace('&edge=curl', '').replace('&zoom=1', '&zoom=3')
+    }
+    
     // Navigate to preview page with book data
     const params = new URLSearchParams({
       title: title,
       author: author,
       isbn: isbn,
-      cover: book.volumeInfo.imageLinks?.thumbnail || '',
+      cover: getHighResCover(book.volumeInfo.imageLinks?.thumbnail || ''),
       publisher: book.volumeInfo.publisher || '',
       publishedDate: book.volumeInfo.publishedDate || '',
       pageCount: book.volumeInfo.pageCount?.toString() || '',

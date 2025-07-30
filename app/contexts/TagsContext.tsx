@@ -21,6 +21,7 @@ interface TagsContextType {
   updateTag: (id: string, updates: Partial<Tag>) => Promise<void>
   deleteTag: (id: string) => Promise<void>
   resetToDefaults: () => Promise<void>
+  addMissingDefaultTags: () => Promise<void>
 }
 
 const TagsContext = createContext<TagsContextType | undefined>(undefined)
@@ -37,6 +38,10 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     { name: 'First Edition', color: 'amber', icon: '📚' },
     { name: 'Hardcover', color: 'blue', icon: '📖' },
     { name: 'Paperback', color: 'green', icon: '📗' },
+    { name: 'Hardback', color: 'blue', icon: '📘' },
+    { name: 'Sprayed Edged', color: 'indigo', icon: '🌈' },
+    { name: 'Fairyloot', color: 'pink', icon: '🧚' },
+    { name: 'Series', color: 'purple', icon: '📚' },
     { name: 'Limited Edition', color: 'indigo', icon: '💎' },
     { name: 'Gift', color: 'pink', icon: '🎁' },
     { name: 'Favourite', color: 'rose', icon: '❤️' }
@@ -141,13 +146,36 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const addMissingDefaultTags = async () => {
+    if (!user) throw new Error('User not authenticated')
+
+    try {
+      // Get existing tag names
+      const existingTagNames = tags.map(tag => tag.name)
+      
+      // Find missing default tags
+      const missingTags = defaultTags.filter(defaultTag => 
+        !existingTagNames.includes(defaultTag.name)
+      )
+      
+      // Add missing tags
+      for (const missingTag of missingTags) {
+        await createTag(missingTag)
+      }
+    } catch (error) {
+      console.error('Error adding missing default tags:', error)
+      throw error
+    }
+  }
+
   const value = {
     tags,
     loading,
     createTag,
     updateTag,
     deleteTag,
-    resetToDefaults
+    resetToDefaults,
+    addMissingDefaultTags
   }
 
   return (

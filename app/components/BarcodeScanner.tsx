@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library'
 import { Camera, X, Zap, ZapOff, AlertCircle } from 'lucide-react'
 
@@ -19,122 +19,45 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
   const [permissionState, setPermissionState] = useState<string>('unknown')
   const codeReader = useRef<BrowserMultiFormatReader | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const lastScannedRef = useRef<string>('')
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isProcessingRef = useRef<boolean>(false)
 
-  useEffect(() => {
-    if (isActive) {
-      checkPermissionsAndStart()
-    } else {
+  // Debounced scan handler to prevent multiple rapid scans
+  const handleScan = useCallback((scannedText: string) => {
+    if (isProcessingRef.current || scannedText === lastScannedRef.current) {
+      return
+    }
+
+    // Simple validation - check if it looks like a barcode (10+ digits)
+    const cleanText = scannedText.replace(/[^0-9X]/g, '')
+    if (cleanText.length < 10) {
+      return
+    }
+
+    isProcessingRef.current = true
+    lastScannedRef.current = scannedText
+
+    // Clear any existing timeout
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current)
+    }
+
+    // Small delay to prevent duplicate scans
+    scanTimeoutRef.current = setTimeout(() => {
+      onScan(scannedText)
       stopScanning()
-    }
+      isProcessingRef.current = false
+    }, 100)
+  }, [onScan])
 
-    return () => {
-      stopScanning()
-    }
-  }, [isActive])
-
-  const checkPermissionsAndStart = async () => {
-    try {
-      setError(null)
-      setIsScanning(true)
-
-      // Check if we're in a secure context
-      if (!window.isSecureContext) {
-        setError('Camera access requires HTTPS. Please use a secure connection.')
-        setHasPermission(false)
-        setIsScanning(false)
-        return
-      }
-
-      // Check if getUserMedia is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setError('Camera access is not supported in this browser.')
-        setHasPermission(false)
-        setIsScanning(false)
-        return
-      }
-
-      // Check current permission state
-      if (navigator.permissions) {
-        try {
-          const permission = await navigator.permissions.query({ name: 'camera' as PermissionName })
-          setPermissionState(permission.state)
-          
-          if (permission.state === 'denied') {
-            setError('Camera permission denied. Please enable camera access in your browser settings and refresh the page.')
-            setHasPermission(false)
-            setIsScanning(false)
-            return
-          }
-        } catch (err) {
-          console.log('Permission query not supported, proceeding with getUserMedia')
-        }
-      }
-
-      // Request camera permission
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment', // Use back camera
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      })
-
-      streamRef.current = stream
-      setHasPermission(true)
-      setPermissionState('granted')
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-
-        // Initialize barcode reader
-        codeReader.current = new BrowserMultiFormatReader()
-        
-        // Start scanning
-        codeReader.current.decodeFromVideoDevice(null, videoRef.current, (result, error) => {
-          if (result) {
-            const scannedText = result.getText()
-            
-            // Check if it looks like an ISBN (10 or 13 digits, possibly with hyphens)
-            const isbnPattern = /^(?:ISBN(?:-1[03])?:? )?(?=[0-9X]{10}$|(?=(?:[0-9]+[- ]){3})[- 0-9X]{13}$|97[89][0-9]{10}$|(?=(?:[0-9]+[- ]){4})[- 0-9]{17}$)(?:97[89][- ]?)?[0-9]{1,5}[- ]?[0-9]+[- ]?[0-9]+[- ]?[0-9X]$/
-            
-            if (isbnPattern.test(scannedText) || scannedText.length >= 10) {
-              onScan(scannedText)
-              stopScanning()
-            }
-          }
-          
-          if (error && !(error instanceof NotFoundException)) {
-            console.error('Barcode scanning error:', error)
-          }
-        })
-      }
-    } catch (err: any) {
-      console.error('Error starting camera:', err)
-      setHasPermission(false)
-      
-      // Provide more specific error messages
-      if (err.name === 'NotAllowedError') {
-        setError('Camera access denied. Please allow camera permission and try again.')
-        setPermissionState('denied')
-      } else if (err.name === 'NotFoundError') {
-        setError('No camera found. Please ensure your device has a camera.')
-      } else if (err.name === 'NotReadableError') {
-        setError('Camera is already in use by another application.')
-      } else if (err.name === 'OverconstrainedError') {
-        setError('Camera does not meet the required specifications.')
-      } else if (err.name === 'TypeError') {
-        setError('Camera access is not supported in this browser.')
-      } else {
-        setError(`Camera error: ${err.message || 'Unknown error occurred'}`)
-      }
-      
-      setIsScanning(false)
-    }
-  }
-
-  const stopScanning = () => {
+  const stopScanning = useCallback(() => {
     setIsScanning(false)
+    
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current)
+      scanTimeoutRef.current = null
+    }
     
     if (codeReader.current) {
       codeReader.current.reset()
@@ -149,16 +72,112 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
-  }
 
-  const retryCamera = () => {
+    isProcessingRef.current = false
+    lastScannedRef.current = ''
+  }, [])
+
+  const checkPermissionsAndStart = useCallback(async () => {
+    try {
+      setError(null)
+      setIsScanning(true)
+
+      // Quick checks
+      if (!window.isSecureContext) {
+        setError('Camera access requires HTTPS.')
+        setHasPermission(false)
+        setIsScanning(false)
+        return
+      }
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setError('Camera access is not supported.')
+        setHasPermission(false)
+        setIsScanning(false)
+        return
+      }
+
+      // Request camera with optimized settings
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          frameRate: { ideal: 30, max: 60 }
+        }
+      })
+
+      streamRef.current = stream
+      setHasPermission(true)
+      setPermissionState('granted')
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+
+                // Initialize optimized barcode reader
+        codeReader.current = new BrowserMultiFormatReader()
+        
+        // Start scanning with optimized settings
+         codeReader.current.decodeFromVideoDevice(
+           null, 
+           videoRef.current, 
+           (result, error) => {
+             if (result && !isProcessingRef.current) {
+               handleScan(result.getText())
+             }
+             
+             if (error && !(error instanceof NotFoundException)) {
+               // Only log critical errors, not normal "not found" errors
+               if (error.name !== 'NotFoundException') {
+                 console.error('Barcode scanning error:', error)
+               }
+             }
+           }
+         )
+      }
+    } catch (err: any) {
+      console.error('Error starting camera:', err)
+      setHasPermission(false)
+      
+      // Simplified error messages
+      if (err.name === 'NotAllowedError') {
+        setError('Camera access denied. Please allow camera permission.')
+        setPermissionState('denied')
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera found.')
+      } else if (err.name === 'NotReadableError') {
+        setError('Camera is already in use.')
+      } else {
+        setError(`Camera error: ${err.message || 'Unknown error'}`)
+      }
+      
+      setIsScanning(false)
+    }
+  }, [handleScan])
+
+  useEffect(() => {
+    if (isActive) {
+      checkPermissionsAndStart()
+    } else {
+      stopScanning()
+    }
+
+    return () => {
+      stopScanning()
+    }
+  }, [isActive, checkPermissionsAndStart, stopScanning])
+
+  const retryCamera = useCallback(() => {
     setError(null)
     setHasPermission(null)
     setPermissionState('unknown')
+    lastScannedRef.current = ''
+    isProcessingRef.current = false
     checkPermissionsAndStart()
-  }
+  }, [checkPermissionsAndStart])
 
-  const toggleFlash = async () => {
+  const toggleFlash = useCallback(async () => {
     if (streamRef.current) {
       const videoTrack = streamRef.current.getVideoTracks()[0]
       const capabilities = videoTrack.getCapabilities() as any
@@ -173,7 +192,7 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
         }
       }
     }
-  }
+  }, [flashEnabled])
 
   if (!isActive) return null
 
@@ -189,7 +208,7 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
             <X className="w-5 h-5" />
           </button>
           <h2 className="text-lg sm:text-xl font-semibold">Scan Barcode</h2>
-          <div className="w-11"></div> {/* Spacer for centering */}
+          <div className="w-11"></div>
         </div>
       </div>
 
@@ -244,7 +263,6 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
               </div>
               <p className="text-sm sm:text-base mb-4">{error}</p>
               
-              {/* Additional help for permission issues */}
               {permissionState === 'denied' && (
                 <div className="text-xs text-red-100 mb-4">
                   <p className="mb-2">To fix this:</p>
@@ -293,4 +311,4 @@ export default function BarcodeScanner({ onScan, onClose, isActive }: BarcodeSca
       </div>
     </div>
   )
-} 
+}
