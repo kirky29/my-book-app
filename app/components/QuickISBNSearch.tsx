@@ -144,6 +144,11 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                             src={book.cover} 
                             alt={book.title}
                             className="w-10 h-14 object-cover rounded flex-shrink-0"
+                            style={{
+                              imageRendering: 'crisp-edges'
+                            }}
+                            loading="lazy"
+                            decoding="async"
                           />
                         )}
                         <div className="flex-1">
@@ -191,6 +196,11 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                             src={book.cover} 
                             alt={book.title}
                             className="w-10 h-14 object-cover rounded flex-shrink-0"
+                            style={{
+                              imageRendering: 'crisp-edges'
+                            }}
+                            loading="lazy"
+                            decoding="async"
                           />
                         )}
                         <div className="flex-1">
@@ -234,6 +244,11 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
                         src={result.volumeInfo.imageLinks.thumbnail} 
                         alt={result.volumeInfo.title}
                         className="w-12 h-16 object-cover rounded flex-shrink-0"
+                        style={{
+                          imageRendering: 'crisp-edges'
+                        }}
+                        loading="lazy"
+                        decoding="async"
                       />
                     )}
                     <div className="flex-1">

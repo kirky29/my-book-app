@@ -293,6 +293,17 @@ export default function BookPreview() {
                     src={bookData.cover} 
                     alt={bookData.title}
                     className="w-32 h-48 sm:w-40 sm:h-60 object-cover rounded-lg shadow-md"
+                    style={{
+                      imageRendering: 'crisp-edges'
+                    }}
+                    loading="eager"
+                    decoding="async"
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails to load
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      target.nextElementSibling?.classList.remove('hidden')
+                    }}
                   />
                 ) : (
                   <div className="w-32 h-48 sm:w-40 sm:h-60 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-md">

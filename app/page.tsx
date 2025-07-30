@@ -794,10 +794,16 @@ export default function BookTracker() {
                             className="w-full h-56 sm:h-72 object-contain rounded-lg mb-2 sm:mb-3 shadow-md hover:shadow-lg transition-shadow bg-white"
                             style={{ 
                               aspectRatio: '2/3',
-                              imageRendering: '-webkit-optimize-contrast'
+                              imageRendering: 'crisp-edges'
                             }}
                             loading="lazy"
                             decoding="async"
+                            onError={(e) => {
+                              // Fallback to placeholder if image fails to load
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              target.nextElementSibling?.classList.remove('hidden')
+                            }}
                           />
                         ) : (
                           <div 
@@ -858,10 +864,16 @@ export default function BookTracker() {
                             className="w-16 h-28 sm:w-20 sm:h-36 object-contain rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow bg-white"
                             style={{ 
                               aspectRatio: '2/3',
-                              imageRendering: '-webkit-optimize-contrast'
+                              imageRendering: 'crisp-edges'
                             }}
                             loading="lazy"
                             decoding="async"
+                            onError={(e) => {
+                              // Fallback to placeholder if image fails to load
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              target.nextElementSibling?.classList.remove('hidden')
+                            }}
                           />
                         ) : (
                           <div 

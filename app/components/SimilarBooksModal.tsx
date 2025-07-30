@@ -156,6 +156,11 @@ export default function SimilarBooksModal({
                           src={result.book.cover} 
                           alt={result.book.title}
                           className="w-16 h-24 object-cover rounded-lg flex-shrink-0"
+                          style={{
+                            imageRendering: 'crisp-edges'
+                          }}
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -207,6 +212,11 @@ export default function SimilarBooksModal({
                           src={result.book.cover} 
                           alt={result.book.title}
                           className="w-16 h-24 object-cover rounded-lg flex-shrink-0"
+                          style={{
+                            imageRendering: 'crisp-edges'
+                          }}
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -261,6 +271,11 @@ export default function SimilarBooksModal({
                           src={result.book.cover} 
                           alt={result.book.title}
                           className="w-16 h-24 object-cover rounded-lg flex-shrink-0"
+                          style={{
+                            imageRendering: 'crisp-edges'
+                          }}
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">

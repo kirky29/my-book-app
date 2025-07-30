@@ -105,12 +105,36 @@ export default function AddBook() {
           const title = book.volumeInfo.title || 'Unknown Title'
           const author = authors.join(', ')
           
+          // Get higher resolution cover image
+          const getHighResCover = (thumbnailUrl: string) => {
+            if (!thumbnailUrl) return ''
+            
+            // Try to get the highest quality image available
+            let highResUrl = thumbnailUrl
+              .replace('&edge=curl', '') // Remove curl effect
+              .replace('&zoom=1', '&zoom=5') // Increase zoom
+              .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+            
+            // If the URL contains 'books.google.com', we can try to get even higher resolution
+            if (highResUrl.includes('books.google.com')) {
+              // Try to get extra large version if available
+              highResUrl = highResUrl.replace('zoom=5', 'zoom=8')
+              
+              // Add additional quality parameters
+              if (!highResUrl.includes('&img=1')) {
+                highResUrl += '&img=1'
+              }
+            }
+            
+            return highResUrl
+          }
+          
           // Navigate to preview page with book data
           const params = new URLSearchParams({
             title: title,
             author: author,
             isbn: cleanedCode,
-            cover: book.volumeInfo.imageLinks?.thumbnail || '',
+            cover: getHighResCover(book.volumeInfo.imageLinks?.thumbnail || ''),
             publisher: book.volumeInfo.publisher || '',
             publishedDate: book.volumeInfo.publishedDate || '',
             pageCount: book.volumeInfo.pageCount?.toString() || '',
@@ -142,11 +166,37 @@ export default function AddBook() {
     const title = book.volumeInfo.title || 'Unknown Title'
     const author = authors.join(', ')
     
-    // Get higher resolution cover image
+    // Get higher resolution cover image with multiple fallback options
     const getHighResCover = (thumbnailUrl: string) => {
       if (!thumbnailUrl) return ''
-      // Replace thumbnail with zoom for higher resolution
-      return thumbnailUrl.replace('&edge=curl', '').replace('&zoom=1', '&zoom=3')
+      
+      // Try to get the highest quality image available
+      // Google Books API provides different image sizes:
+      // - small: 128px
+      // - thumbnail: 128px with curl effect
+      // - smallThumbnail: 80px
+      // - medium: 240px
+      // - large: 400px
+      // - extraLarge: 800px
+      
+      // First, try to get the large version (400px)
+      let highResUrl = thumbnailUrl
+        .replace('&edge=curl', '') // Remove curl effect
+        .replace('&zoom=1', '&zoom=5') // Increase zoom
+        .replace('&source=gbs_api', '&source=gbs_api&img=1&zoom=5') // Add high quality parameters
+      
+      // If the URL contains 'books.google.com', we can try to get even higher resolution
+      if (highResUrl.includes('books.google.com')) {
+        // Try to get extra large version if available
+        highResUrl = highResUrl.replace('zoom=5', 'zoom=8')
+        
+        // Add additional quality parameters
+        if (!highResUrl.includes('&img=1')) {
+          highResUrl += '&img=1'
+        }
+      }
+      
+      return highResUrl
     }
     
     // Navigate to preview page with book data

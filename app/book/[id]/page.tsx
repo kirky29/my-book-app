@@ -119,7 +119,7 @@ export default function BookDetail() {
                     alt={book.title}
                     className="w-64 h-96 sm:w-80 sm:h-[28rem] lg:w-96 lg:h-[32rem] object-contain rounded-3xl shadow-xl border border-gray-200 bg-white"
                     style={{
-                      imageRendering: '-webkit-optimize-contrast'
+                      imageRendering: 'crisp-edges'
                     }}
                     loading="eager"
                     decoding="async"
