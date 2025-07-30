@@ -82,7 +82,7 @@ export default function RootLayout({
           <AuthWrapper>
             <BookProvider>
               <div className="flex justify-center min-h-screen">
-                <div className="w-full max-w-md bg-white/95 backdrop-blur-sm min-h-screen shadow-2xl border-x border-gray-100">
+                <div className="w-full max-w-lg lg:max-w-2xl bg-white/95 backdrop-blur-sm min-h-screen shadow-2xl border-x border-gray-100">
                   {children}
                 </div>
               </div>

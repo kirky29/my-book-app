@@ -15,7 +15,7 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
   const [result, setResult] = useState<any>(null)
   const [existingBooks, setExistingBooks] = useState<any[]>([])
   const [duplicates, setDuplicates] = useState<any[]>([])
-  const { getBooksByISBN, searchByISBN, findDuplicates } = useBooks()
+  const { getBooksByISBN, searchByISBN, findSimilarBooks } = useBooks()
 
   const handleSearch = async () => {
     if (!isbn.trim()) return
@@ -40,9 +40,9 @@ export default function QuickISBNSearch({ onBookFound, onClose }: QuickISBNSearc
       const author = googleBook.volumeInfo.authors?.[0] || 'Unknown'
       
       // Check for similar books (different editions, formats, etc.)
-      const similarBooks = findDuplicates(title, author)
+      const similarBooks = findSimilarBooks(title, author, isbn, googleBook.volumeInfo.publisher)
       if (similarBooks.length > 0) {
-        setDuplicates(similarBooks)
+        setDuplicates(similarBooks.map(result => result.book))
       }
       
       setResult(googleBook)
