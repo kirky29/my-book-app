@@ -579,7 +579,61 @@ export default function BookTracker() {
               {isSearching ? 'Searching...' : 'Search Results'}
             </h3>
             
-            {/* Google Books Results */}
+            {/* Your Library Results - Show First */}
+            {filteredBooks.length > 0 && (
+              <div className="space-y-2 sm:space-y-3">
+                <h4 className="text-xs sm:text-base font-medium text-gray-700">In Your Library:</h4>
+                {filteredBooks.map((book) => (
+                  <div 
+                    key={book.id}
+                    onClick={() => router.push(`/book/${book.id}`)}
+                    className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all"
+                  >
+                    <div className="flex gap-3 sm:gap-4">
+                      {book.cover ? (
+                        <img 
+                          src={getImprovedCoverUrl(book.cover)} 
+                          alt={book.title}
+                          className="w-16 h-24 sm:w-20 sm:h-32 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
+                          style={{
+                            imageRendering: 'crisp-edges'
+                          }}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            // Fallback to original URL if improved URL fails
+                            const target = e.target as HTMLImageElement
+                            if (target.src !== book.cover && book.cover) {
+                              target.src = book.cover
+                            } else {
+                              // Fallback to placeholder if both fail
+                              target.style.display = 'none'
+                              target.nextElementSibling?.classList.remove('hidden')
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-16 h-24 sm:w-20 sm:h-32 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                          <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 flex-shrink-0" />
+                          <h5 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{book.title}</h5>
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">{book.author}</p>
+                        <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                          ✓ You own this
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Google Books Results - Show Second */}
             {searchResults.length > 0 && (
               <div className="space-y-2 sm:space-y-3">
                 <h4 className="text-xs sm:text-base font-medium text-gray-700">Add to Library:</h4>
@@ -644,44 +698,6 @@ export default function BookTracker() {
                     </div>
                   )
                 })}
-              </div>
-            )}
-
-            {/* Your Library Results */}
-            {filteredBooks.length > 0 && (
-              <div className="space-y-2 sm:space-y-3">
-                <h4 className="text-xs sm:text-base font-medium text-gray-700">In Your Library:</h4>
-                {filteredBooks.map((book) => (
-                  <div 
-                    key={book.id}
-                    onClick={() => router.push(`/book/${book.id}`)}
-                    className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all"
-                  >
-                    <div className="flex gap-3 sm:gap-4">
-                      {book.cover ? (
-                        <img 
-                          src={book.cover} 
-                          alt={book.title}
-                          className="w-16 h-24 sm:w-20 sm:h-32 object-cover rounded-lg flex-shrink-0 shadow-md hover:shadow-lg transition-shadow"
-                        />
-                      ) : (
-                        <div className="w-16 h-24 sm:w-20 sm:h-32 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
-                          <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 flex-shrink-0" />
-                          <h5 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{book.title}</h5>
-                        </div>
-                        <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">{book.author}</p>
-                        <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
-                          ✓ You own this
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
 
