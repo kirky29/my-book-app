@@ -266,6 +266,45 @@
   .modal-overlay {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+  
+  /* Mobile-specific settings improvements */
+  .settings-tab {
+    min-width: fit-content;
+    flex-shrink: 0;
+  }
+  
+  .settings-content {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .settings-card {
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .settings-button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Extra small screen optimizations */
+@media screen and (max-width: 480px) {
+  .settings-content {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .settings-card {
+    padding: 0.75rem;
+  }
+  
+  .settings-button {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+  }
 }
 
 /* Prevent iOS bounce scroll - but maintain centering */

@@ -330,22 +330,22 @@ export default function Settings() {
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-gray-100">
-        <div className="px-4 py-2">
-          <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
+        <div className="px-2 py-2">
+          <div className="flex space-x-1 overflow-x-auto scrollbar-hide pb-1">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as SettingsTab)}
-                  className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap min-w-fit ${
                     activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700'
+                      ? 'bg-blue-100 text-blue-700 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.name}</span>
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden xs:inline">{tab.name}</span>
                 </button>
               )
             })}
@@ -354,8 +354,8 @@ export default function Settings() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <div className="px-3 py-3 sm:px-4 sm:py-4">
+        <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
@@ -385,71 +385,71 @@ export default function Settings() {
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Library Statistics</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div className="bg-blue-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
-                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600">{books.length}</div>
+                    <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-blue-600">{books.length}</div>
                     <div className="text-xs sm:text-sm text-blue-700 font-medium">Total Books</div>
                   </div>
                   <div className="bg-green-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
-                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">{ownedCount}</div>
+                    <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-green-600">{ownedCount}</div>
                     <div className="text-xs sm:text-sm text-green-700 font-medium">Books Owned</div>
                   </div>
                   <div className="bg-amber-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
-                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-600">{wishlistCount}</div>
+                    <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-amber-600">{wishlistCount}</div>
                     <div className="text-xs sm:text-sm text-amber-700 font-medium">Wishlist</div>
                   </div>
                   <div className="bg-purple-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
-                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600">{series.length}</div>
+                    <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-purple-600">{series.length}</div>
                     <div className="text-xs sm:text-sm text-purple-700 font-medium">Series</div>
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions */}
-              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <SettingsIcon className="w-5 h-5 text-indigo-600" />
+              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <SettingsIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">Quick Actions</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Quick Actions</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   <button
                     onClick={() => setActiveTab('status')}
-                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg sm:rounded-xl transition-colors"
+                    className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-                    <div className="text-left">
+                    <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+                    <div className="text-left flex-1">
                       <p className="font-medium text-blue-900 text-sm sm:text-base">Manage Status Options</p>
                       <p className="text-xs sm:text-sm text-blue-700">Customize book statuses</p>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab('series')}
-                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg sm:rounded-xl transition-colors"
+                    className="flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Library className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
-                    <div className="text-left">
+                    <Library className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0" />
+                    <div className="text-left flex-1">
                       <p className="font-medium text-purple-900 text-sm sm:text-base">Manage Series</p>
                       <p className="text-xs sm:text-sm text-purple-700">Organize book series</p>
                     </div>
                   </button>
                   <button
                     onClick={handleExportLibrary}
-                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg sm:rounded-xl transition-colors"
+                    className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Download className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-                    <div className="text-left">
+                    <Download className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+                    <div className="text-left flex-1">
                       <p className="font-medium text-green-900 text-sm sm:text-base">Export Library</p>
                       <p className="text-xs sm:text-sm text-green-700">Download your data</p>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab('account')}
-                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-red-50 hover:bg-red-100 rounded-lg sm:rounded-xl transition-colors"
+                    className="flex items-center gap-3 p-4 bg-red-50 hover:bg-red-100 rounded-lg sm:rounded-xl transition-colors"
                   >
-                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                    <div className="text-left">
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 flex-shrink-0" />
+                    <div className="text-left flex-1">
                       <p className="font-medium text-red-900 text-sm sm:text-base">Account Settings</p>
                       <p className="text-xs sm:text-sm text-red-700">Manage your account</p>
                     </div>
@@ -461,17 +461,17 @@ export default function Settings() {
 
           {/* Status Options Tab */}
           {activeTab === 'status' && (
-            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Palette className="w-5 h-5 text-blue-600" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <Palette className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">Book Status Options</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Book Status Options</h3>
                 </div>
                 <button
                   onClick={() => setShowAddStatus(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Status</span>
@@ -488,34 +488,34 @@ export default function Settings() {
                   {statusOptions.map((status) => (
                     <div 
                       key={status.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl">{status.icon}</span>
-                        <div>
-                          <p className="font-medium text-gray-900 text-lg">{status.name}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className={`inline-block w-4 h-4 rounded-full bg-${status.color}-500`}></span>
-                            <span className="text-sm text-gray-500">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">{status.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 text-base sm:text-lg truncate">{status.name}</p>
+                          <div className="flex items-center gap-2 sm:gap-3 mt-1">
+                            <span className={`inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-${status.color}-500 flex-shrink-0`}></span>
+                            <span className="text-xs sm:text-sm text-gray-500 truncate">
                               {status.isDefault ? 'Default Status' : 'Custom Status'}
                             </span>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         {!status.isDefault && (
                           <>
                             <button
                               onClick={() => setEditingStatus(status)}
-                              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                              className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-lg transition-colors"
                               title="Edit Status"
                             >
                               <Edit3 className="w-4 h-4 text-gray-600" />
                             </button>
                             <button
                               onClick={() => handleDeleteStatus(status.id)}
-                              className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                              className="p-1.5 sm:p-2 hover:bg-red-100 rounded-lg transition-colors"
                               title="Delete Status"
                             >
                               <Trash2 className="w-4 h-4 text-red-600" />
@@ -540,17 +540,17 @@ export default function Settings() {
 
           {/* Series Tab */}
           {activeTab === 'series' && (
-            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <Library className="w-5 h-5 text-purple-600" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <Library className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">Book Series</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Book Series</h3>
                 </div>
                 <button
                   onClick={() => setShowAddSeries(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Series</span>
@@ -578,37 +578,37 @@ export default function Settings() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   {series.map((seriesItem) => (
                     <div 
                       key={seriesItem.id}
-                      className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{seriesItem.icon}</span>
-                          <div>
-                            <p className="font-medium text-gray-900 text-lg">{seriesItem.name}</p>
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <span className="text-xl sm:text-2xl flex-shrink-0">{seriesItem.icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-gray-900 text-base sm:text-lg truncate">{seriesItem.name}</p>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className={`inline-block w-3 h-3 rounded-full bg-${seriesItem.color}-500`}></span>
-                              <span className="text-sm text-gray-500">
+                              <span className={`inline-block w-3 h-3 rounded-full bg-${seriesItem.color}-500 flex-shrink-0`}></span>
+                              <span className="text-xs sm:text-sm text-gray-500">
                                 {seriesItem.bookIds.length} book{seriesItem.bookIds.length !== 1 ? 's' : ''}
                               </span>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={() => setEditingSeries(seriesItem)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            className="p-1.5 sm:p-1 hover:bg-gray-200 rounded transition-colors"
                             title="Edit Series"
                           >
                             <Edit3 className="w-4 h-4 text-gray-600" />
                           </button>
                           <button
                             onClick={() => handleDeleteSeries(seriesItem.id)}
-                            className="p-1 hover:bg-red-100 rounded transition-colors"
+                            className="p-1.5 sm:p-1 hover:bg-red-100 rounded transition-colors"
                             title="Delete Series"
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
@@ -617,7 +617,7 @@ export default function Settings() {
                       </div>
                       
                       {seriesItem.description && (
-                        <p className="text-sm text-gray-600">{seriesItem.description}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2">{seriesItem.description}</p>
                       )}
                     </div>
                   ))}
@@ -628,17 +628,17 @@ export default function Settings() {
 
           {/* Tags Tab */}
           {activeTab === 'tags' && (
-            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-orange-600" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">Book Tags</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Book Tags</h3>
                 </div>
                 <button
                   onClick={() => setShowAddTag(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Tag</span>
@@ -670,32 +670,32 @@ export default function Settings() {
                   {tags.map((tag) => (
                     <div 
                       key={tag.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl">{tag.icon}</span>
-                        <div>
-                          <p className="font-medium text-gray-900 text-lg">{tag.name}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className={`inline-block w-4 h-4 rounded-full bg-${tag.color}-500`}></span>
-                            <span className="text-sm text-gray-500">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">{tag.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 text-base sm:text-lg truncate">{tag.name}</p>
+                          <div className="flex items-center gap-2 sm:gap-3 mt-1">
+                            <span className={`inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-${tag.color}-500 flex-shrink-0`}></span>
+                            <span className="text-xs sm:text-sm text-gray-500 truncate">
                               Created {new Date(tag.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         <button
                           onClick={() => setEditingTag(tag)}
-                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                          className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-lg transition-colors"
                           title="Edit Tag"
                         >
                           <Edit3 className="w-4 h-4 text-gray-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteTag(tag.id)}
-                          className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                          className="p-1.5 sm:p-2 hover:bg-red-100 rounded-lg transition-colors"
                           title="Delete Tag"
                         >
                           <Trash2 className="w-4 h-4 text-red-600" />
@@ -832,10 +832,10 @@ export default function Settings() {
 
       {/* Add Status Modal */}
       {showAddStatus && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md max-h-[95vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Add New Status</h3>
                 <button
                   onClick={() => setShowAddStatus(false)}
@@ -853,7 +853,7 @@ export default function Settings() {
                     value={newStatus.name}
                     onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
                     placeholder="e.g., Reading Now"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   />
                 </div>
 
@@ -864,7 +864,7 @@ export default function Settings() {
                     value={newStatus.icon}
                     onChange={(e) => setNewStatus({ ...newStatus, icon: e.target.value })}
                     placeholder="📖"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   />
                 </div>
 
@@ -873,7 +873,7 @@ export default function Settings() {
                   <select
                     value={newStatus.color}
                     onChange={(e) => setNewStatus({ ...newStatus, color: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   >
                     <option value="gray">Gray</option>
                     <option value="red">Red</option>
@@ -899,7 +899,7 @@ export default function Settings() {
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={() => setShowAddStatus(false)}
-                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
                   >
                     Cancel
                   </button>
