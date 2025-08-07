@@ -237,7 +237,7 @@ export default function BookPreview() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe-area-bottom pb-20">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Existing Book Warning */}
           {existingBooks.length > 0 && (
@@ -385,7 +385,7 @@ export default function BookPreview() {
           )}
 
           {/* Add to Library Section */}
-          <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Add to Library</h3>
             
             {/* Status Selector */}
@@ -414,11 +414,12 @@ export default function BookPreview() {
             </div>
 
             {/* Add Button */}
-            <button
-              onClick={handleAddBook}
-              disabled={isAdding || !selectedStatus}
-              className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
+            <div className="pb-6">
+              <button
+                onClick={handleAddBook}
+                disabled={isAdding || !selectedStatus}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
               {isAdding ? (
                 <>
                   <div className="spinner h-5 w-5"></div>
@@ -436,6 +437,7 @@ export default function BookPreview() {
                 </>
               )}
             </button>
+            </div>
           </div>
         </div>
       </div>
