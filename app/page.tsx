@@ -772,7 +772,6 @@ export default function BookTracker() {
                 {/* Sorting and View Controls */}
                 <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Sort by:</span>
                     {/* Sort By Dropdown */}
                     <div className="relative">
                       <select
