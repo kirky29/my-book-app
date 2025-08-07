@@ -39,7 +39,8 @@ export default function Settings() {
     updateTag,
     deleteTag,
     resetToDefaults: resetTagsToDefaults,
-    addMissingDefaultTags
+    addMissingDefaultTags,
+    cleanupDuplicateTags
   } = useTags()
 
   const searchParams = useSearchParams()
@@ -281,6 +282,16 @@ export default function Settings() {
     } catch (error) {
       console.error('Error adding missing default tags:', error)
       alert('Failed to add missing default tags')
+    }
+  }
+
+  const handleCleanupDuplicateTags = async () => {
+    try {
+      await cleanupDuplicateTags()
+      alert('Duplicate tags have been cleaned up!')
+    } catch (error) {
+      console.error('Error cleaning up duplicate tags:', error)
+      alert('Failed to clean up duplicate tags')
     }
   }
 
@@ -723,6 +734,14 @@ export default function Settings() {
                         <span>Add Missing Default Tags</span>
                       </button>
                     </div>
+                    
+                    <button
+                      onClick={handleCleanupDuplicateTags}
+                      className="w-full flex items-center justify-center gap-2 p-4 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors border-2 border-dashed border-orange-300"
+                    >
+                      <span>🧹</span>
+                      <span>Clean Up Duplicate Tags</span>
+                    </button>
                     
                     <button
                       onClick={testTagSync}

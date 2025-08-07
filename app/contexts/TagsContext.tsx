@@ -22,6 +22,7 @@ interface TagsContextType {
   deleteTag: (id: string) => Promise<void>
   resetToDefaults: () => Promise<void>
   addMissingDefaultTags: () => Promise<void>
+  cleanupDuplicateTags: () => Promise<void>
 }
 
 const TagsContext = createContext<TagsContextType | undefined>(undefined)
@@ -204,6 +205,35 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const cleanupDuplicateTags = async () => {
+    if (!user) throw new Error('User not authenticated')
+
+    try {
+      // Group tags by name to find duplicates
+      const tagGroups = tags.reduce((groups, tag) => {
+        if (!groups[tag.name]) {
+          groups[tag.name] = []
+        }
+        groups[tag.name].push(tag)
+        return groups
+      }, {} as Record<string, Tag[]>)
+
+      // Delete duplicate tags (keep the first one)
+      for (const [tagName, tagList] of Object.entries(tagGroups)) {
+        if (tagList.length > 1) {
+          // Keep the first tag, delete the rest
+          for (let i = 1; i < tagList.length; i++) {
+            await deleteTag(tagList[i].id)
+          }
+          console.log(`Cleaned up ${tagList.length - 1} duplicate(s) for tag: ${tagName}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up duplicate tags:', error)
+      throw error
+    }
+  }
+
   const value = {
     tags,
     loading,
@@ -211,7 +241,8 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     updateTag,
     deleteTag,
     resetToDefaults,
-    addMissingDefaultTags
+    addMissingDefaultTags,
+    cleanupDuplicateTags
   }
 
   return (
