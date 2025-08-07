@@ -770,70 +770,66 @@ export default function BookTracker() {
                 )}
 
                 {/* Sorting and View Controls */}
-                <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    {/* Sort By Dropdown */}
-                    <div className="relative">
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as 'dateAdded' | 'title' | 'author')}
-                        className="appearance-none pl-3 pr-8 py-2 text-xs sm:text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
-                      >
-                        <option value="dateAdded">Date Added</option>
-                        <option value="title">Title</option>
-                        <option value="author">Author</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                    
-                    {/* Sort Order Toggle */}
-                    <button
-                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                      className={`p-2 text-xs sm:text-sm border rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
-                        sortOrder === 'asc' 
-                          ? 'bg-green-100 border-green-300 text-green-700 hover:bg-green-200' 
-                          : 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200'
-                      }`}
-                      title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
+                <div className="flex items-center justify-center gap-3 mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                  {/* Sort By Dropdown */}
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as 'dateAdded' | 'title' | 'author')}
+                      className="appearance-none pl-4 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     >
-                      {sortOrder === 'asc' ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      )}
-                    </button>
+                      <option value="dateAdded">Date Added</option>
+                      <option value="title">Title</option>
+                      <option value="author">Author</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    {/* View Mode Toggle */}
-                    <button
-                      onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                      className={`p-2 text-xs sm:text-sm border rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
-                        viewMode === 'grid' 
-                          ? 'bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200' 
-                          : 'bg-orange-100 border-orange-300 text-orange-700 hover:bg-orange-200'
-                      }`}
-                      title={viewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'}
-                    >
-                      {viewMode === 'grid' ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
+                  {/* Sort Order Toggle */}
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className={`p-2.5 border rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
+                      sortOrder === 'asc' 
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100' 
+                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                    }`}
+                    title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
+                  >
+                    {sortOrder === 'asc' ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </button>
+                  
+                  {/* View Mode Toggle */}
+                  <button
+                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                    className={`p-2.5 border rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
+                      viewMode === 'grid' 
+                        ? 'bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100' 
+                        : 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
+                    }`}
+                    title={viewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'}
+                  >
+                    {viewMode === 'grid' ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
 
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4' : 'space-y-2 sm:space-y-3'}>
