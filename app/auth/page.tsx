@@ -166,12 +166,7 @@ export default function AuthPage() {
 
         </div>
 
-        {/* Info for users */}
-        <div className="mt-6 bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-gray-100 text-center max-w-md mx-auto">
-          <p className="text-sm text-gray-600">
-            ✨ Your books will sync across all your devices once you sign in
-          </p>
-        </div>
+
       </div>
     </div>
   )
