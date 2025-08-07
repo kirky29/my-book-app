@@ -317,26 +317,26 @@ export default function BookTracker() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Minimal Header */}
-      <header className="bg-white border-b border-gray-100 safe-area-top">
+      <header className="bg-blue-600 border-b border-blue-700 safe-area-top">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Book Tracker</h1>
-              <p className="text-xs text-gray-500">
+              <h1 className="text-lg font-semibold text-white">Book Tracker</h1>
+              <p className="text-xs text-blue-100">
                 {books.length > 0 ? `${ownedCount} owned, ${books.length} total` : 'No books yet'}
               </p>
             </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => router.push('/add')}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                className="p-2 text-blue-100 hover:text-white hover:bg-blue-700 rounded-lg transition-colors"
                 title="Add Book"
               >
                 <Plus className="w-5 h-5" />
               </button>
               <button
                 onClick={() => router.push('/settings')}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                className="p-2 text-blue-100 hover:text-white hover:bg-blue-700 rounded-lg transition-colors"
                 title="Settings"
               >
                 <Settings className="w-5 h-5" />
