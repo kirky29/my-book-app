@@ -231,7 +231,11 @@ export default function Settings() {
     } catch (error) {
       console.error('Error adding tag:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      alert(`Failed to add tag: ${errorMessage}`)
+      if (errorMessage.includes('already exists')) {
+        alert(`Tag creation failed: ${errorMessage}`)
+      } else {
+        alert(`Failed to add tag: ${errorMessage}`)
+      }
     }
   }
 

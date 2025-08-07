@@ -116,6 +116,12 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error('User not authenticated')
 
     try {
+      // Check if tag with same name already exists
+      const existingTagNames = tags.map(t => t.name.toLowerCase())
+      if (existingTagNames.includes(tag.name.toLowerCase())) {
+        throw new Error(`A tag with the name "${tag.name}" already exists.`)
+      }
+
       const tagData = {
         ...tag,
         userId: user.uid,
@@ -173,7 +179,7 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
         await deleteDoc(doc.ref)
       }
 
-      // Add default tags
+      // Add exactly the default tags (no duplicates)
       for (const defaultTag of defaultTags) {
         await createTag(defaultTag)
       }
