@@ -302,7 +302,7 @@ export default function AddBook() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe-area-bottom">
         <div className="space-y-6">
           {/* Quick Actions */}
           <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm">
@@ -475,7 +475,7 @@ export default function AddBook() {
 
           {/* Manual Entry Form */}
           {showManualEntry && (
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm">
+            <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Add Book Manually</h3>
                 <button
