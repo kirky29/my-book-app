@@ -21,7 +21,6 @@ interface TagsContextType {
   updateTag: (id: string, updates: Partial<Tag>) => Promise<void>
   deleteTag: (id: string) => Promise<void>
   resetToDefaults: () => Promise<void>
-  addMissingDefaultTags: () => Promise<void>
   cleanupDuplicateTags: () => Promise<void>
 }
 
@@ -71,37 +70,17 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
       setTags(tagsData)
       setLoading(false)
       
-      // Automatically add missing default tags for existing users or all default tags for new users
-      if (!hasAddedDefaults) {
-        if (tagsData.length === 0) {
-          // New user - add all default tags
-          try {
-            for (const defaultTag of defaultTags) {
-              await createTag(defaultTag)
-            }
-            console.log(`Added ${defaultTags.length} default tags for new user`)
-            setHasAddedDefaults(true)
-          } catch (error) {
-            console.error('Error adding default tags for new user:', error)
+      // Automatically add default tags for new users only
+      if (!hasAddedDefaults && tagsData.length === 0) {
+        try {
+          // Add exactly the default tags for new users
+          for (const defaultTag of defaultTags) {
+            await createTag(defaultTag)
           }
-        } else {
-          // Existing user - add only missing default tags
-          const existingTagNames = tagsData.map(tag => tag.name)
-          const missingTags = defaultTags.filter(defaultTag => 
-            !existingTagNames.includes(defaultTag.name)
-          )
-          
-          if (missingTags.length > 0) {
-            try {
-              for (const missingTag of missingTags) {
-                await createTag(missingTag)
-              }
-              console.log(`Added ${missingTags.length} missing default tags`)
-            } catch (error) {
-              console.error('Error adding missing default tags:', error)
-            }
-          }
+          console.log(`Added ${defaultTags.length} default tags for new user`)
           setHasAddedDefaults(true)
+        } catch (error) {
+          console.error('Error adding default tags for new user:', error)
         }
       }
     }, (error) => {
@@ -189,27 +168,7 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const addMissingDefaultTags = async () => {
-    if (!user) throw new Error('User not authenticated')
 
-    try {
-      // Get existing tag names
-      const existingTagNames = tags.map(tag => tag.name)
-      
-      // Find missing default tags
-      const missingTags = defaultTags.filter(defaultTag => 
-        !existingTagNames.includes(defaultTag.name)
-      )
-      
-      // Add missing tags
-      for (const missingTag of missingTags) {
-        await createTag(missingTag)
-      }
-    } catch (error) {
-      console.error('Error adding missing default tags:', error)
-      throw error
-    }
-  }
 
   const cleanupDuplicateTags = async () => {
     if (!user) throw new Error('User not authenticated')
@@ -247,7 +206,6 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     updateTag,
     deleteTag,
     resetToDefaults,
-    addMissingDefaultTags,
     cleanupDuplicateTags
   }
 
