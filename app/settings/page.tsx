@@ -38,9 +38,7 @@ export default function Settings() {
     createTag,
     updateTag,
     deleteTag,
-    resetToDefaults: resetTagsToDefaults,
-    addMissingDefaultTags,
-    cleanupDuplicateTags
+    resetToDefaults: resetTagsToDefaults
   } = useTags()
 
   const searchParams = useSearchParams()
@@ -275,40 +273,7 @@ export default function Settings() {
     }
   }
 
-  const handleAddMissingDefaultTags = async () => {
-    try {
-      await addMissingDefaultTags()
-      alert('New default tags have been added!')
-    } catch (error) {
-      console.error('Error adding missing default tags:', error)
-      alert('Failed to add missing default tags')
-    }
-  }
 
-  const handleCleanupDuplicateTags = async () => {
-    try {
-      await cleanupDuplicateTags()
-      alert('Duplicate tags have been cleaned up!')
-    } catch (error) {
-      console.error('Error cleaning up duplicate tags:', error)
-      alert('Failed to clean up duplicate tags')
-    }
-  }
-
-  const testTagSync = async () => {
-    try {
-      // Create a test tag
-      await createTag({
-        name: 'Test Tag',
-        color: 'blue',
-        icon: '🧪'
-      })
-      alert('Test tag created successfully! Check the tags list.')
-    } catch (error) {
-      console.error('Error creating test tag:', error)
-      alert('Failed to create test tag. Check console for details.')
-    }
-  }
 
   const ownedCount = books.filter(book => book.status === 'owned').length
   const wishlistCount = books.filter(book => book.status === 'wishlist').length
@@ -716,41 +681,6 @@ export default function Settings() {
                   ))}
                   
                   <div className="space-y-3">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Plus className="w-3 h-3 text-blue-600" />
-                        </div>
-                        <h4 className="font-medium text-blue-900">Missing Default Tags</h4>
-                      </div>
-                      <p className="text-sm text-blue-700 mb-3">
-                        Add the new default tags to your library: Paperback, Hardback, Signed Copy, Fairyloot, First Edition, Limited Edition, Sprayed Edged, Gift, Series, Favourite, Borrowing, Loaned Out
-                      </p>
-                      <button
-                        onClick={handleAddMissingDefaultTags}
-                        className="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Missing Default Tags</span>
-                      </button>
-                    </div>
-                    
-                    <button
-                      onClick={handleCleanupDuplicateTags}
-                      className="w-full flex items-center justify-center gap-2 p-4 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors border-2 border-dashed border-orange-300"
-                    >
-                      <span>🧹</span>
-                      <span>Clean Up Duplicate Tags</span>
-                    </button>
-                    
-                    <button
-                      onClick={testTagSync}
-                      className="w-full flex items-center justify-center gap-2 p-4 text-green-600 hover:bg-green-50 rounded-xl transition-colors border-2 border-dashed border-green-300"
-                    >
-                      <span>🧪</span>
-                      <span>Test Tag Sync</span>
-                    </button>
-                    
                     <button
                       onClick={handleResetTagsToDefaults}
                       className="w-full flex items-center justify-center gap-2 p-4 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors border-2 border-dashed border-gray-300"
