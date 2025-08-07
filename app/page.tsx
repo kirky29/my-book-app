@@ -780,9 +780,9 @@ export default function BookTracker() {
                         onChange={(e) => setSortBy(e.target.value as 'dateAdded' | 'title' | 'author')}
                         className="appearance-none pl-3 pr-8 py-2 text-xs sm:text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
                       >
-                        <option value="dateAdded">📅 Date Added</option>
-                        <option value="title">📖 Title</option>
-                        <option value="author">✍️ Author</option>
+                        <option value="dateAdded">Date Added</option>
+                        <option value="title">Title</option>
+                        <option value="author">Author</option>
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                         <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
