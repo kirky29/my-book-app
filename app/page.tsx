@@ -329,10 +329,10 @@ export default function BookTracker() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => router.push('/add')}
-                className="p-2 text-blue-100 hover:text-white hover:bg-blue-700 rounded-lg transition-colors"
+                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                 title="Add Book"
               >
-                <Plus className="w-5 h-5" />
+                Add Book
               </button>
               <button
                 onClick={() => router.push('/settings')}
