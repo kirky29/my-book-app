@@ -322,7 +322,9 @@ export default function BookTracker() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Book Tracker</h1>
-              <p className="text-xs text-gray-500">{ownedCount} owned</p>
+              <p className="text-xs text-gray-500">
+                {books.length > 0 ? `${ownedCount} owned, ${books.length} total` : 'No books yet'}
+              </p>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -356,17 +358,17 @@ export default function BookTracker() {
                 placeholder="Search books..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm hover:shadow-md transition-all duration-200"
               />
             </div>
             
             {/* Filter Toggle Button */}
             <button
               onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm flex-shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0 ${
                 activeFilters.length > 0
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
               }`}
             >
               <Filter className="w-4 h-4" />
@@ -767,15 +769,16 @@ export default function BookTracker() {
                   </div>
                 )}
 
-                {/* Sorting Controls */}
-                <div className="flex items-center justify-end mb-4">
+                {/* Sorting and View Controls */}
+                <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Sort by:</span>
                     {/* Sort By Dropdown */}
                     <div className="relative">
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as 'dateAdded' | 'title' | 'author')}
-                        className="appearance-none pl-3 pr-8 py-2 text-xs sm:text-sm border border-gray-200 rounded-lg bg-white/90 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
+                        className="appearance-none pl-3 pr-8 py-2 text-xs sm:text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         <option value="dateAdded">📅 Date Added</option>
                         <option value="title">📖 Title</option>
@@ -791,10 +794,10 @@ export default function BookTracker() {
                     {/* Sort Order Toggle */}
                     <button
                       onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                      className={`p-2 text-xs sm:text-sm border rounded-lg backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md ${
+                      className={`p-2 text-xs sm:text-sm border rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
                         sortOrder === 'asc' 
-                          ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
-                          : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+                          ? 'bg-green-100 border-green-300 text-green-700 hover:bg-green-200' 
+                          : 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200'
                       }`}
                       title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
                     >
@@ -808,14 +811,17 @@ export default function BookTracker() {
                         </svg>
                       )}
                     </button>
-                    
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">View:</span>
                     {/* View Mode Toggle */}
                     <button
                       onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                      className={`p-2 text-xs sm:text-sm border rounded-lg backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md ${
+                      className={`p-2 text-xs sm:text-sm border rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
                         viewMode === 'grid' 
-                          ? 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100' 
-                          : 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                          ? 'bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200' 
+                          : 'bg-orange-100 border-orange-300 text-orange-700 hover:bg-orange-200'
                       }`}
                       title={viewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'}
                     >
