@@ -175,6 +175,17 @@ export default function AssignToSeries() {
               </div>
             )}
 
+            {/* Create New Series Button */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => router.push('/settings?tab=series&action=add')}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="font-medium">Create New Series</span>
+              </button>
+            </div>
+
             {/* Action Buttons */}
             {series.length > 0 && (
               <div className="flex gap-3 mt-6">

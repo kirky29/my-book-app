@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, LogOut, User, Download, BookOpen, Plus, Edit3, Trash2, RotateCcw, X, AlertTriangle, Settings as SettingsIcon, Palette, Library, Shield } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../contexts/BookContext'
 import { useStatusOptions, StatusOption } from '../contexts/StatusOptionsContext'
@@ -42,7 +42,20 @@ export default function Settings() {
     addMissingDefaultTags
   } = useTags()
 
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<SettingsTab>('overview')
+
+  // Handle URL tab parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as SettingsTab
+    if (tabParam && ['overview', 'status', 'series', 'tags', 'library', 'account'].includes(tabParam)) {
+      setActiveTab(tabParam)
+      // Auto-open add series modal if coming from series assignment
+      if (tabParam === 'series' && searchParams.get('action') === 'add') {
+        setShowAddSeries(true)
+      }
+    }
+  }, [searchParams])
   const [showAddStatus, setShowAddStatus] = useState(false)
   const [editingStatus, setEditingStatus] = useState<StatusOption | null>(null)
   const [newStatus, setNewStatus] = useState({ name: '', color: 'gray', icon: '📖' })
