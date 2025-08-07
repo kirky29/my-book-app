@@ -68,8 +68,19 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
       setTags(tagsData)
       setLoading(false)
       
-      // Automatically add missing default tags for existing users
-      if (tagsData.length > 0) {
+      // Automatically add missing default tags for existing users or all default tags for new users
+      if (tagsData.length === 0) {
+        // New user - add all default tags
+        try {
+          for (const defaultTag of defaultTags) {
+            await createTag(defaultTag)
+          }
+          console.log(`Added ${defaultTags.length} default tags for new user`)
+        } catch (error) {
+          console.error('Error adding default tags for new user:', error)
+        }
+      } else {
+        // Existing user - add only missing default tags
         const existingTagNames = tagsData.map(tag => tag.name)
         const missingTags = defaultTags.filter(defaultTag => 
           !existingTagNames.includes(defaultTag.name)
