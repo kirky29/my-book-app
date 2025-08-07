@@ -705,13 +705,24 @@ export default function Settings() {
                   ))}
                   
                   <div className="space-y-3">
-                    <button
-                      onClick={handleAddMissingDefaultTags}
-                      className="w-full flex items-center justify-center gap-2 p-4 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border-2 border-dashed border-blue-300"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Missing Default Tags</span>
-                    </button>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Plus className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <h4 className="font-medium text-blue-900">Missing Default Tags</h4>
+                      </div>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Add the new default tags to your library: Paperback, Hardback, Signed Copy, Fairyloot, First Edition, Limited Edition, Sprayed Edged, Gift, Series, Favourite, Borrowing, Loaned Out
+                      </p>
+                      <button
+                        onClick={handleAddMissingDefaultTags}
+                        className="w-full flex items-center justify-center gap-2 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Missing Default Tags</span>
+                      </button>
+                    </div>
                     
                     <button
                       onClick={testTagSync}

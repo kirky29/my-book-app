@@ -60,13 +60,32 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
       where('userId', '==', user.uid)
     )
 
-    const unsubscribe = onSnapshot(tagsQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(tagsQuery, async (snapshot) => {
       const tagsData: Tag[] = []
       snapshot.forEach((doc) => {
         tagsData.push({ id: doc.id, ...doc.data() } as Tag)
       })
       setTags(tagsData)
       setLoading(false)
+      
+      // Automatically add missing default tags for existing users
+      if (tagsData.length > 0) {
+        const existingTagNames = tagsData.map(tag => tag.name)
+        const missingTags = defaultTags.filter(defaultTag => 
+          !existingTagNames.includes(defaultTag.name)
+        )
+        
+        if (missingTags.length > 0) {
+          try {
+            for (const missingTag of missingTags) {
+              await createTag(missingTag)
+            }
+            console.log(`Added ${missingTags.length} missing default tags`)
+          } catch (error) {
+            console.error('Error adding missing default tags:', error)
+          }
+        }
+      }
     }, (error) => {
       console.error('Error fetching tags:', error)
       setLoading(false)
