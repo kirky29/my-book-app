@@ -33,18 +33,18 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
 
   // Default tags
   const defaultTags = [
-    { name: 'Special Edition', color: 'purple', icon: '⭐' },
-    { name: 'Signed Copy', color: 'red', icon: '✍️' },
-    { name: 'First Edition', color: 'amber', icon: '📚' },
-    { name: 'Hardcover', color: 'blue', icon: '📖' },
     { name: 'Paperback', color: 'green', icon: '📗' },
     { name: 'Hardback', color: 'blue', icon: '📘' },
-    { name: 'Sprayed Edged', color: 'indigo', icon: '🌈' },
+    { name: 'Signed Copy', color: 'red', icon: '✍️' },
     { name: 'Fairyloot', color: 'pink', icon: '🧚' },
-    { name: 'Series', color: 'purple', icon: '📚' },
+    { name: 'First Edition', color: 'amber', icon: '📚' },
     { name: 'Limited Edition', color: 'indigo', icon: '💎' },
+    { name: 'Sprayed Edged', color: 'purple', icon: '🌈' },
     { name: 'Gift', color: 'pink', icon: '🎁' },
-    { name: 'Favourite', color: 'rose', icon: '❤️' }
+    { name: 'Series', color: 'purple', icon: '📚' },
+    { name: 'Favourite', color: 'rose', icon: '❤️' },
+    { name: 'Borrowing', color: 'orange', icon: '📖' },
+    { name: 'Loaned Out', color: 'yellow', icon: '📤' }
   ]
 
   // Fetch tags from Firestore
