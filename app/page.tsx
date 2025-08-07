@@ -813,7 +813,6 @@ export default function BookTracker() {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">View:</span>
                     {/* View Mode Toggle */}
                     <button
                       onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
